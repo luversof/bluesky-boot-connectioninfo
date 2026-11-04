@@ -1,5 +1,7 @@
 package io.github.luversof.boot.connectioninfo.mongodb;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -93,19 +95,11 @@ public class PropertiesMongoClientConnectionInfoReader implements ConnectionInfo
 			config.setDatabase(connConfig.getDatabase());
 
 			// username/password는 암호화되어 있을 수 있으므로 복호화
-			String username = connConfig.getUsername();
-			if (username != null) {
-				config.setUserName(encryptor.decrypt(username));
-			}
-
-			String password = connConfig.getPassword();
-			if (password != null) {
-				config.setPassword(encryptor.decrypt(password));
-			}
-
-			// connectionString 생성
-			String connectionString = buildConnectionString(connConfig);
-			config.setConnectionString(connectionString);
+			String username = connConfig.getUsername() == null ? null : encryptor.decrypt(connConfig.getUsername());
+			String password = connConfig.getPassword() == null ? null : encryptor.decrypt(connConfig.getPassword());
+			config.setUserName(username);
+			config.setPassword(password);
+			config.setConnectionString(buildConnectionString(connConfig, username, password));
 
 			configList.add(config);
 		}
@@ -117,20 +111,23 @@ public class PropertiesMongoClientConnectionInfoReader implements ConnectionInfo
 	 * MongoDB connectionString을 생성합니다.
 	 * 
 	 * @param connConfig MongoDB 연결 설정
+	 * @param username 복호화한 사용자명
+	 * @param password 복호화한 비밀번호
 	 * @return MongoDB connectionString
 	 */
-	private String buildConnectionString(MongoDbConnectionMapProperties.MongoConnectionConfig connConfig) {
-		var encryptor = TextEncryptorFactories.getDelegatingTextEncryptor();
+	/** 드라이버는 '+' 를 공백으로 풀지 않으므로 URLEncoder 의 '+' 를 %20 으로 바꾼다. */
+	private static String encodeUserInfo(String value) {
+		return URLEncoder.encode(value, StandardCharsets.UTF_8).replace("+", "%20");
+	}
 
+	String buildConnectionString(MongoDbConnectionMapProperties.MongoConnectionConfig connConfig, String username, String password) {
 		StringBuilder connectionString = new StringBuilder("mongodb://");
 
-		// username/password가 있으면 추가
-		String username = connConfig.getUsername();
-		String password = connConfig.getPassword();
+		// username/password가 있으면 추가. '@' ':' '/' '%' 가 든 비밀번호도 되도록 URL 인코딩한다(드라이버가 디코딩한다)
 		if (username != null && password != null) {
-			connectionString.append(encryptor.decrypt(username))
+			connectionString.append(encodeUserInfo(username))
 					.append(":")
-					.append(encryptor.decrypt(password))
+					.append(encodeUserInfo(password))
 					.append("@");
 		}
 

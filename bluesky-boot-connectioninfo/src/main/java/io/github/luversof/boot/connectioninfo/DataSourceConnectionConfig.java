@@ -58,7 +58,7 @@ public class DataSourceConnectionConfig implements ConnectionConfig {
 	@Override
 	public String toString() {
 		return "DataSourceConnectionConfig(connection=" + this.getConnection() + ", url=" + this.getUrl()
-				+ ", username=" + this.getUsername() + ", password=" + this.getPassword() + ", extradata="
+				+ ", username=" + this.getUsername() + ", password=" + (this.getPassword() == null ? null : "****") + ", extradata="
 				+ this.getExtradata() + ")";
 	}
 

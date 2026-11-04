@@ -12,16 +12,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class MongoDbDefaultProperties {
 
 	/**
-	 * 기본 호스트
-	 */
-	private String host = "localhost";
-
-	/**
-	 * 기본 포트
-	 */
-	private Integer port = 27017;
-
-	/**
 	 * 인증 데이터베이스
 	 */
 	private String authenticationDatabase = "admin";
@@ -52,22 +42,6 @@ public class MongoDbDefaultProperties {
 	 * Write Concern 설정
 	 */
 	private WriteConcern writeConcern = new WriteConcern();
-
-	public String getHost() {
-		return host;
-	}
-
-	public void setHost(String host) {
-		this.host = host;
-	}
-
-	public Integer getPort() {
-		return port;
-	}
-
-	public void setPort(Integer port) {
-		this.port = port;
-	}
 
 	public String getAuthenticationDatabase() {
 		return authenticationDatabase;

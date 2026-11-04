@@ -96,7 +96,6 @@ public class MongoDbMongoClientConnectionInfoLoader
 			var readConnectionConfigList = connectionInfoReader.readConnectionConfigList(connectionList);
 			if (!CollectionUtils.isEmpty(readConnectionConfigList)) {
 				addConnectionConfigList(connectionConfigList, readConnectionConfigList, connectionInfoReader);
-				connectionConfigList.addAll(readConnectionConfigList);
 			}
 		});
 

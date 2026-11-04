@@ -236,3 +236,7 @@ buildNumber.properties
 .ionide
 
 # End of https://www.toptal.com/developers/gitignore/api/java,maven,eclipse,intellij,visualstudiocode
+
+# Claude Code 관련 파일 및 디렉토리
+.claude/
+claude_session/

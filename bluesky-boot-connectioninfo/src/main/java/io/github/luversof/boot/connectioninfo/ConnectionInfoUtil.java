@@ -13,7 +13,7 @@ import org.springframework.core.ResolvableType;
 
 public final class ConnectionInfoUtil {
 
-  private static ApplicationContext applicationContext;
+  private static volatile ApplicationContext applicationContext;
 
   /** LazyLoad를 connectionKey 단위로 직렬화하기 위한 lock. connectionKey 개수만큼만 늘어난다. */
   private static final Map<String, Object> lazyLoadLockMap = new ConcurrentHashMap<>();

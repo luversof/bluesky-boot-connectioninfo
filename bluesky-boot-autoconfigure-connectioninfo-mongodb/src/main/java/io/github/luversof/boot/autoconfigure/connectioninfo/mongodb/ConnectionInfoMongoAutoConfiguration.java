@@ -9,7 +9,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.mongodb.autoconfigure.MongoAutoConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.PropertySource;
 
 import com.mongodb.client.MongoClient;
 
@@ -34,7 +33,6 @@ import io.github.luversof.boot.connectioninfo.mongodb.PropertiesMongoClientConne
   MongoDbDefaultProperties.class,
   MongoDbConnectionMapProperties.class
 })
-@PropertySource("classpath:bluesky-boot-connectioninfo-mongodb-defaults.properties")
 public class ConnectionInfoMongoAutoConfiguration {
 
   @Bean

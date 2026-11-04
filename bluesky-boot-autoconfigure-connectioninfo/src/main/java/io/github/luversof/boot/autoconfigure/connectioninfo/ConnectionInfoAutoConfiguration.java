@@ -22,7 +22,9 @@ import io.github.luversof.boot.connectioninfo.ConnectionInfoRegistry;
 @ConditionalOnProperty(prefix = "bluesky-boot.connection-info", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class ConnectionInfoAutoConfiguration {
 	
+	/** dev-check 를 켰을 때만. {@code @DevCheckController} 는 {@code @RestController} 라 꺼도 원래 경로로 노출된다. */
 	@Bean
+	@ConditionalOnProperty(prefix = "bluesky-boot.dev-check", name = "enabled", havingValue = "true")
 	ConnectionInfoDevCheckController connectionInfoDevCheckController(List<ConnectionInfoRegistry<?>> connectionInfoRegistryList) {
 		return new ConnectionInfoDevCheckController(connectionInfoRegistryList);
 	}

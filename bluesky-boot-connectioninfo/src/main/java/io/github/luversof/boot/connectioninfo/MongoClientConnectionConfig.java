@@ -65,7 +65,7 @@ public class MongoClientConnectionConfig implements ConnectionConfig {
 	public String toString() {
 		return "MongoClientConnectionConfig(connection=" + this.getConnection() + ", connectionString="
 				+ this.getConnectionString() + ", database=" + this.getDatabase() + ", userName=" + this.getUserName()
-				+ ", password=" + this.getPassword() + ")";
+				+ ", password=" + (this.getPassword() == null ? null : "****") + ")";
 	}
 
 	@Override

@@ -9,6 +9,7 @@ import javax.sql.DataSource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
@@ -26,7 +27,7 @@ import io.github.luversof.boot.connectioninfo.DataSourceConnectionConfig;
  * @param <T> The type of DataSource to be loaded via Loader
  */
 public abstract class AbstractDataSourceConnectionInfoLoader<T extends DataSource, C extends DataSourceConnectionConfig>
-		implements ConnectionInfoLoader<T, C> {
+		implements ConnectionInfoLoader<T, C>, DisposableBean {
 
 	protected final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -131,5 +132,23 @@ public abstract class AbstractDataSourceConnectionInfoLoader<T extends DataSourc
 	}
 
 	protected abstract ConnectionInfo<T> createConnectionInfo(DataSourceConnectionConfig connectionConfig);
+
+	/**
+	 * 앱 종료 시 이 로더가 만든 커넥션 풀을 닫는다. 예전에는 모으기만 하고 닫지 않아 재시작·컨텍스트 재생성 때마다 풀이 남았다.
+	 */
+	@Override
+	public void destroy() {
+		for (var dataSource : this.createdDataSources) {
+			if (dataSource instanceof AutoCloseable closeable) {
+				try {
+					closeable.close();
+				}
+				catch (Exception exception) {
+					log.warn("Failed to close DataSource on shutdown", exception);
+				}
+			}
+		}
+		this.createdDataSources.clear();
+	}
 
 }
