@@ -1,6 +1,5 @@
 package io.github.luversof.boot.connectioninfo;
 
-import java.util.Map;
 import java.util.Objects;
 
 public class DataSourceConnectionConfig implements ConnectionConfig {
@@ -12,8 +11,6 @@ public class DataSourceConnectionConfig implements ConnectionConfig {
   private String username;
 
   private String password;
-
-  private Map<String, Object> extradata;
 
   public String getConnection() {
     return connection;
@@ -47,14 +44,6 @@ public class DataSourceConnectionConfig implements ConnectionConfig {
     this.password = password;
   }
 
-  public Map<String, Object> getExtradata() {
-    return extradata;
-  }
-
-  public void setExtradata(Map<String, Object> extradata) {
-    this.extradata = extradata;
-  }
-
   @Override
   public String toString() {
     return "DataSourceConnectionConfig(connection="
@@ -65,8 +54,6 @@ public class DataSourceConnectionConfig implements ConnectionConfig {
         + this.getUsername()
         + ", password="
         + (this.getPassword() == null ? null : "****")
-        + ", extradata="
-        + this.getExtradata()
         + ")";
   }
 
@@ -78,8 +65,7 @@ public class DataSourceConnectionConfig implements ConnectionConfig {
         && Objects.equals(this.getConnection(), other.getConnection())
         && Objects.equals(this.getUrl(), other.getUrl())
         && Objects.equals(this.getUsername(), other.getUsername())
-        && Objects.equals(this.getPassword(), other.getPassword())
-        && Objects.equals(this.getExtradata(), other.getExtradata());
+        && Objects.equals(this.getPassword(), other.getPassword());
   }
 
   protected boolean canEqual(final Object other) {
@@ -89,10 +75,6 @@ public class DataSourceConnectionConfig implements ConnectionConfig {
   @Override
   public int hashCode() {
     return Objects.hash(
-        this.getConnection(),
-        this.getUrl(),
-        this.getUsername(),
-        this.getPassword(),
-        this.getExtradata());
+        this.getConnection(), this.getUrl(), this.getUsername(), this.getPassword());
   }
 }

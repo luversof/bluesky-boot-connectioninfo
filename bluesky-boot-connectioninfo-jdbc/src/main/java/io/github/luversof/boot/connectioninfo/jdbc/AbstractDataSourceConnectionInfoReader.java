@@ -22,7 +22,7 @@ public abstract class AbstractDataSourceConnectionInfoReader<C extends DataSourc
 
   protected String readerQuery =
       """
-      SELECT connection, url, username, password, extradata
+      SELECT connection, url, username, password
       FROM DataSourceConnectionConfig
       WHERE connection IN ({0})
       """;

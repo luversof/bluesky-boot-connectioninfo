@@ -2,8 +2,6 @@ package io.github.luversof.boot.connectioninfo;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Map;
-
 import org.junit.jupiter.api.Test;
 
 class ConnectionEqualsTests {
@@ -31,17 +29,16 @@ class ConnectionEqualsTests {
 
   @Test
   void dataSourceConnectionConfig() {
-    var config = dataSource("c", "u", "n", "p", Map.of("k", "v"));
+    var config = dataSource("c", "u", "n", "p");
 
-    assertEqualContract(config, dataSource("c", "u", "n", "p", Map.of("k", "v")));
+    assertEqualContract(config, dataSource("c", "u", "n", "p"));
     assertNotEqual(
         config,
         OTHER_TYPE,
-        dataSource("x", "u", "n", "p", Map.of("k", "v")),
-        dataSource("c", "x", "n", "p", Map.of("k", "v")),
-        dataSource("c", "u", "x", "p", Map.of("k", "v")),
-        dataSource("c", "u", "n", "x", Map.of("k", "v")),
-        dataSource("c", "u", "n", "p", Map.of("k", "x")),
+        dataSource("x", "u", "n", "p"),
+        dataSource("c", "x", "n", "p"),
+        dataSource("c", "u", "x", "p"),
+        dataSource("c", "u", "n", "x"),
         new DataSourceConnectionConfig() {
           @Override
           protected boolean canEqual(Object other) {
@@ -83,17 +80,12 @@ class ConnectionEqualsTests {
   }
 
   private static DataSourceConnectionConfig dataSource(
-      String connection,
-      String url,
-      String username,
-      String password,
-      Map<String, Object> extradata) {
+      String connection, String url, String username, String password) {
     var config = new DataSourceConnectionConfig();
     config.setConnection(connection);
     config.setUrl(url);
     config.setUsername(username);
     config.setPassword(password);
-    config.setExtradata(extradata);
     return config;
   }
 

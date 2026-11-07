@@ -56,8 +56,11 @@ public interface ConnectionInfoRegistry<T> {
    * @return
    */
   default List<ConnectionInfo<T>> getConnectionInfo(String connectionKey) {
+    // 로더가 connection 이름을 대소문자 구분 없이 다루고 key는 저장소의 이름으로 만들므로 같은 규칙으로 찾는다.
+    // 다르게 비교하면 매번 못 찾아 LazyLoad가 connection을 계속 새로 만든다.
     return getConnectionInfoList().stream()
-        .filter(connectionInfo -> connectionInfo.getKey().connectionKey().equals(connectionKey))
+        .filter(connectionInfo ->
+            connectionInfo.getKey().connectionKey().equalsIgnoreCase(connectionKey))
         .toList();
   }
 }
