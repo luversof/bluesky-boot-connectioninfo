@@ -44,4 +44,16 @@
 			<email>luversof@hanmail.net</email>
 		</developer>
 	</developers>
+
+	<profiles>
+		<profile>
+			<id>sonarqube</id>
+			<properties>
+				<sonar.projectKey>bluesky-boot-connectioninfo</sonar.projectKey>
+				<sonar.projectName>bluesky boot connectioninfo project</sonar.projectName>
+				<sonar.ws.timeout>300</sonar.ws.timeout>
+				<sonar.qualitygate.wait>true</sonar.qualitygate.wait>
+			</properties>
+		</profile>
+	</profiles>
 </project>
