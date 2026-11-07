@@ -9,30 +9,30 @@ import io.github.luversof.boot.connectioninfo.ConnectionInfoProperties;
 import io.github.luversof.boot.connectioninfo.DataSourceConnectionConfig;
 
 public class MysqlDataSourceConnectionInfoReader
-		extends AbstractDataSourceConnectionInfoReader<DataSourceConnectionConfig> {
+    extends AbstractDataSourceConnectionInfoReader<DataSourceConnectionConfig> {
 
-	protected String readerKey = "mysql-datasource";
+  protected String readerKey = "mysql-datasource";
 
-	@Override
-	public String getReaderKey() {
-		return readerKey;
-	}
+  @Override
+  public String getReaderKey() {
+    return readerKey;
+  }
 
-	@Override
-	protected Driver getReaderDriver() {
-		try {
-			return new com.mysql.cj.jdbc.Driver();
-		} catch (java.sql.SQLException e) {
-			throw new RuntimeException(e);
-		}
-	}
+  @Override
+  protected Driver getReaderDriver() {
+    try {
+      return new com.mysql.cj.jdbc.Driver();
+    } catch (java.sql.SQLException e) {
+      throw new RuntimeException(e);
+    }
+  }
 
-	public MysqlDataSourceConnectionInfoReader(ConnectionInfoProperties connectionInfoProperties) {
-		super(connectionInfoProperties);
-	}
+  public MysqlDataSourceConnectionInfoReader(ConnectionInfoProperties connectionInfoProperties) {
+    super(connectionInfoProperties);
+  }
 
-	@Override
-	protected RowMapper<DataSourceConnectionConfig> getConnectionConfigRowMapper() {
-		return new DataClassRowMapper<>(DataSourceConnectionConfig.class);
-	}
+  @Override
+  protected RowMapper<DataSourceConnectionConfig> getConnectionConfigRowMapper() {
+    return new DataClassRowMapper<>(DataSourceConnectionConfig.class);
+  }
 }

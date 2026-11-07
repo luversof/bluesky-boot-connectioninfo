@@ -25,6 +25,8 @@
 		<!-- (s) sonarqube -->
 		<jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
 		<sonar-maven-plugin.version>5.8.0.7211</sonar-maven-plugin.version>
+		<spotless-maven-plugin.version>3.10.4</spotless-maven-plugin.version>
+		<google-java-format.version>2.0.0</google-java-format.version>
 		<!-- (e) sonarqube -->
 	</properties>
 	<dependencyManagement>
@@ -97,8 +99,52 @@
 						</annotationProcessorPaths>
 					</configuration>
 				</plugin>
+				<plugin>
+					<groupId>com.diffplug.spotless</groupId>
+					<artifactId>spotless-maven-plugin</artifactId>
+					<version>${spotless-maven-plugin.version}</version>
+
+					<configuration>
+						<java>
+							<googleJavaFormat>
+								<version>${google-java-format.version}</version>
+								<style>GOOGLE</style>
+							</googleJavaFormat>
+
+							<!-- import 자동 정리 -->
+							<removeUnusedImports />
+
+							<!-- import 순서 강제 -->
+							<importOrder>
+								<order>java,javax,org,com</order>
+							</importOrder>
+
+							<!-- 개행 통일 -->
+							<endWithNewline />
+
+							<!-- 불필요 공백 제거 -->
+							<trimTrailingWhitespace />
+						</java>
+					</configuration>
+
+					<executions>
+						<execution>
+							<!-- apply has no default phase, so it never ran
+							here; format with `mvn spotless:apply` -->
+							<goals>
+								<goal>check</goal>
+							</goals>
+						</execution>
+					</executions>
+				</plugin>
 			</plugins>
 		</pluginManagement>
+		<plugins>
+			<plugin>
+				<groupId>com.diffplug.spotless</groupId>
+				<artifactId>spotless-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
 	</build>
 	
 	<profiles>

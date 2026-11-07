@@ -9,29 +9,29 @@ import io.github.luversof.boot.connectioninfo.ConnectionInfoProperties;
 import io.github.luversof.boot.connectioninfo.DataSourceConnectionConfig;
 
 public class SQLServerDataSourceConnectionInfoReader
-		extends AbstractDataSourceConnectionInfoReader<DataSourceConnectionConfig> {
+    extends AbstractDataSourceConnectionInfoReader<DataSourceConnectionConfig> {
 
-	protected String readerKey = "sqlserver-datasource";
+  protected String readerKey = "sqlserver-datasource";
 
-	protected Driver readerDriver = new com.microsoft.sqlserver.jdbc.SQLServerDriver();
+  protected Driver readerDriver = new com.microsoft.sqlserver.jdbc.SQLServerDriver();
 
-	public SQLServerDataSourceConnectionInfoReader(ConnectionInfoProperties connectionInfoProperties) {
-		super(connectionInfoProperties);
-	}
+  public SQLServerDataSourceConnectionInfoReader(
+      ConnectionInfoProperties connectionInfoProperties) {
+    super(connectionInfoProperties);
+  }
 
-	@Override
-	public String getReaderKey() {
-		return readerKey;
-	}
+  @Override
+  public String getReaderKey() {
+    return readerKey;
+  }
 
-	@Override
-	public Driver getReaderDriver() {
-		return readerDriver;
-	}
+  @Override
+  public Driver getReaderDriver() {
+    return readerDriver;
+  }
 
-	@Override
-	protected RowMapper<DataSourceConnectionConfig> getConnectionConfigRowMapper() {
-		return new DataClassRowMapper<>(DataSourceConnectionConfig.class);
-	}
-
+  @Override
+  protected RowMapper<DataSourceConnectionConfig> getConnectionConfigRowMapper() {
+    return new DataClassRowMapper<>(DataSourceConnectionConfig.class);
+  }
 }

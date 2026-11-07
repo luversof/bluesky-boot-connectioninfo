@@ -9,29 +9,28 @@ import io.github.luversof.boot.connectioninfo.ConnectionInfoProperties;
 import io.github.luversof.boot.connectioninfo.DataSourceConnectionConfig;
 
 public class MariaDbDataSourceConnectionInfoReader
-		extends AbstractDataSourceConnectionInfoReader<DataSourceConnectionConfig> {
+    extends AbstractDataSourceConnectionInfoReader<DataSourceConnectionConfig> {
 
-	protected String readerKey = "mariadb-datasource";
+  protected String readerKey = "mariadb-datasource";
 
-	protected Driver readerDriver = new org.mariadb.jdbc.Driver();
+  protected Driver readerDriver = new org.mariadb.jdbc.Driver();
 
-	public MariaDbDataSourceConnectionInfoReader(ConnectionInfoProperties connectionInfoProperties) {
-		super(connectionInfoProperties);
-	}
+  public MariaDbDataSourceConnectionInfoReader(ConnectionInfoProperties connectionInfoProperties) {
+    super(connectionInfoProperties);
+  }
 
-	@Override
-	public String getReaderKey() {
-		return readerKey;
-	}
+  @Override
+  public String getReaderKey() {
+    return readerKey;
+  }
 
-	@Override
-	public Driver getReaderDriver() {
-		return readerDriver;
-	}
+  @Override
+  public Driver getReaderDriver() {
+    return readerDriver;
+  }
 
-	@Override
-	protected RowMapper<DataSourceConnectionConfig> getConnectionConfigRowMapper() {
-		return new DataClassRowMapper<>(DataSourceConnectionConfig.class);
-	}
-
+  @Override
+  protected RowMapper<DataSourceConnectionConfig> getConnectionConfigRowMapper() {
+    return new DataClassRowMapper<>(DataSourceConnectionConfig.class);
+  }
 }

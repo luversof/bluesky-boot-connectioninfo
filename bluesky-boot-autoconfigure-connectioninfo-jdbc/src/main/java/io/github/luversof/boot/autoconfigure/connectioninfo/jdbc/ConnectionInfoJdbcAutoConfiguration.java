@@ -31,74 +31,111 @@ import io.github.luversof.boot.connectioninfo.jdbc.PostgreSQLDataSourceConnectio
 import io.github.luversof.boot.connectioninfo.jdbc.SQLServerDataSourceConnectionInfoReader;
 
 @AutoConfiguration(
-	value = "blueskyBootConnectionInfoJdbcAutoConfiguration", 
-	before = {
-		DataSourceAutoConfiguration.class,
-		ConnectionInfoAutoConfiguration.class
-	}
-)
-@ConditionalOnClass({ DataSource.class, EmbeddedDatabaseType.class, HikariDataSource.class })
+    value = "blueskyBootConnectionInfoJdbcAutoConfiguration",
+    before = {DataSourceAutoConfiguration.class, ConnectionInfoAutoConfiguration.class})
+@ConditionalOnClass({DataSource.class, EmbeddedDatabaseType.class, HikariDataSource.class})
 public class ConnectionInfoJdbcAutoConfiguration {
 
-	@Configuration(proxyBeanMethods = false)
-	@ConditionalOnClass({ DataSource.class, JdbcTemplate.class, HikariDataSource.class, org.mariadb.jdbc.Driver.class })
-	static class MariaDbDataSourceConnectionInfoConfiguration {
-		
-		@Bean
-		@ConditionalOnProperty(prefix = "bluesky-boot.connection-info.readers", name = "mariadb-datasource.enabled", havingValue = "true")
-		MariaDbDataSourceConnectionInfoReader mariaDbDataSourceConnectionInfoReader(ConnectionInfoProperties connectionInfoProperties) {
-			return new MariaDbDataSourceConnectionInfoReader(connectionInfoProperties);
-		}
-		
-	}
-	
-	@Configuration(proxyBeanMethods = false)
-	@ConditionalOnClass({ DataSource.class, JdbcTemplate.class, HikariDataSource.class, SQLServerDriver.class })
-	static class SQLServerDataSourceConnectionInfoConfiguration {
-		
-		@Bean
-		@ConditionalOnProperty(prefix = "bluesky-boot.connection-info.readers", name = "sqlserver-datasource.enabled", havingValue = "true")
-		SQLServerDataSourceConnectionInfoReader sqlServerDataSourceConnectionInfoReader(ConnectionInfoProperties connectionInfoProperties) {
-			return new SQLServerDataSourceConnectionInfoReader(connectionInfoProperties);
-		}
-	}
-	
-	@Configuration(proxyBeanMethods = false)
-	@ConditionalOnClass({ DataSource.class, JdbcTemplate.class, HikariDataSource.class, com.mysql.jdbc.Driver.class })
-	static class MysqlDbDataSourceConnectionInfoConfiguration {
-		
-		@Bean
-		@ConditionalOnProperty(prefix = "bluesky-boot.connection-info.readers", name = "mysql-datasource.enabled", havingValue = "true")
-		MysqlDataSourceConnectionInfoReader mysqlDataSourceConnectionInfoReader(ConnectionInfoProperties connectionInfoProperties) {
-			return new MysqlDataSourceConnectionInfoReader(connectionInfoProperties);
-		}
-		
-	}
-	
-	@Configuration(proxyBeanMethods = false)
-	@ConditionalOnClass({ DataSource.class, JdbcTemplate.class, HikariDataSource.class, org.postgresql.Driver.class })
-	static class PostgreSQLDataSourceConnectionInfoConfiguration {
-		
-		@Bean
-		@ConditionalOnProperty(prefix = "bluesky-boot.connection-info.readers", name = "postgresql-datasource.enabled", havingValue = "true")
-		PostgreSQLDataSourceConnectionInfoReader postgreSQLDataSourceConnectionInfoReader(ConnectionInfoProperties connectionInfoProperties) {
-			return new PostgreSQLDataSourceConnectionInfoReader(connectionInfoProperties);
-		}
-		
-	}
-	
-	@Bean
-	@ConditionalOnProperty(prefix = "bluesky-boot.connection-info.loaders", name = "hikaridatasource.enabled", havingValue = "true")
-	HikariDataSourceConnectionInfoLoader hikariDataSourceConnectionInfoLoader(ConnectionInfoProperties connectionInfoProperties, List<ConnectionInfoReader<DataSourceConnectionConfig>> connectionInfoReaderList) {
-		return new HikariDataSourceConnectionInfoLoader(connectionInfoProperties, connectionInfoReaderList);
-	}
-	
-	@Bean
-	<T extends HikariDataSource, C extends DataSourceConnectionConfig> ConnectionInfoRegistry<T> dataSourceConnectionInfoRegistry(List<ConnectionInfoLoader<T, C>> connectionInfoLoaderList) {
-		// LazyLoad(ConnectionInfoUtil.getConnection)로 런타임에 추가될 수 있어 조회/추가가 동시에 일어난다.
-		var connectionInfoList = new CopyOnWriteArrayList<ConnectionInfo<T>>();
-		connectionInfoLoaderList.forEach(connectionInfoLoader -> connectionInfoList.addAll(connectionInfoLoader.load()));
-		return () -> connectionInfoList;
-	}
+  @Configuration(proxyBeanMethods = false)
+  @ConditionalOnClass({
+    DataSource.class,
+    JdbcTemplate.class,
+    HikariDataSource.class,
+    org.mariadb.jdbc.Driver.class
+  })
+  static class MariaDbDataSourceConnectionInfoConfiguration {
 
+    @Bean
+    @ConditionalOnProperty(
+        prefix = "bluesky-boot.connection-info.readers",
+        name = "mariadb-datasource.enabled",
+        havingValue = "true")
+    MariaDbDataSourceConnectionInfoReader mariaDbDataSourceConnectionInfoReader(
+        ConnectionInfoProperties connectionInfoProperties) {
+      return new MariaDbDataSourceConnectionInfoReader(connectionInfoProperties);
+    }
+  }
+
+  @Configuration(proxyBeanMethods = false)
+  @ConditionalOnClass({
+    DataSource.class,
+    JdbcTemplate.class,
+    HikariDataSource.class,
+    SQLServerDriver.class
+  })
+  static class SQLServerDataSourceConnectionInfoConfiguration {
+
+    @Bean
+    @ConditionalOnProperty(
+        prefix = "bluesky-boot.connection-info.readers",
+        name = "sqlserver-datasource.enabled",
+        havingValue = "true")
+    SQLServerDataSourceConnectionInfoReader sqlServerDataSourceConnectionInfoReader(
+        ConnectionInfoProperties connectionInfoProperties) {
+      return new SQLServerDataSourceConnectionInfoReader(connectionInfoProperties);
+    }
+  }
+
+  @Configuration(proxyBeanMethods = false)
+  @ConditionalOnClass({
+    DataSource.class,
+    JdbcTemplate.class,
+    HikariDataSource.class,
+    com.mysql.jdbc.Driver.class
+  })
+  static class MysqlDbDataSourceConnectionInfoConfiguration {
+
+    @Bean
+    @ConditionalOnProperty(
+        prefix = "bluesky-boot.connection-info.readers",
+        name = "mysql-datasource.enabled",
+        havingValue = "true")
+    MysqlDataSourceConnectionInfoReader mysqlDataSourceConnectionInfoReader(
+        ConnectionInfoProperties connectionInfoProperties) {
+      return new MysqlDataSourceConnectionInfoReader(connectionInfoProperties);
+    }
+  }
+
+  @Configuration(proxyBeanMethods = false)
+  @ConditionalOnClass({
+    DataSource.class,
+    JdbcTemplate.class,
+    HikariDataSource.class,
+    org.postgresql.Driver.class
+  })
+  static class PostgreSQLDataSourceConnectionInfoConfiguration {
+
+    @Bean
+    @ConditionalOnProperty(
+        prefix = "bluesky-boot.connection-info.readers",
+        name = "postgresql-datasource.enabled",
+        havingValue = "true")
+    PostgreSQLDataSourceConnectionInfoReader postgreSQLDataSourceConnectionInfoReader(
+        ConnectionInfoProperties connectionInfoProperties) {
+      return new PostgreSQLDataSourceConnectionInfoReader(connectionInfoProperties);
+    }
+  }
+
+  @Bean
+  @ConditionalOnProperty(
+      prefix = "bluesky-boot.connection-info.loaders",
+      name = "hikaridatasource.enabled",
+      havingValue = "true")
+  HikariDataSourceConnectionInfoLoader hikariDataSourceConnectionInfoLoader(
+      ConnectionInfoProperties connectionInfoProperties,
+      List<ConnectionInfoReader<DataSourceConnectionConfig>> connectionInfoReaderList) {
+    return new HikariDataSourceConnectionInfoLoader(
+        connectionInfoProperties, connectionInfoReaderList);
+  }
+
+  @Bean
+  <T extends HikariDataSource, C extends DataSourceConnectionConfig>
+      ConnectionInfoRegistry<T> dataSourceConnectionInfoRegistry(
+          List<ConnectionInfoLoader<T, C>> connectionInfoLoaderList) {
+    // LazyLoad(ConnectionInfoUtil.getConnection)로 런타임에 추가될 수 있어 조회/추가가 동시에 일어난다.
+    var connectionInfoList = new CopyOnWriteArrayList<ConnectionInfo<T>>();
+    connectionInfoLoaderList.forEach(
+        connectionInfoLoader -> connectionInfoList.addAll(connectionInfoLoader.load()));
+    return () -> connectionInfoList;
+  }
 }

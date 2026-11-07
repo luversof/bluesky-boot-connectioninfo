@@ -50,7 +50,7 @@ public final class ConnectionInfoUtil {
     // 같은 connectionKey를 동시에 요청하면 Connection(MongoClient/DataSource)이 중복 생성되고,
     // registry에서 조회되지 않는 쪽은 닫히지 않은 채 프로세스 수명 내내 남는다. connectionKey 단위로 직렬화한다.
     // (다른 connectionKey끼리는 서로 다른 lock이므로 경합하지 않는다)
-    synchronized (lazyLoadLockMap.computeIfAbsent(connectionKey, (_) -> new Object())) {
+    synchronized (lazyLoadLockMap.computeIfAbsent(connectionKey, _ -> new Object())) {
       // lock 대기 중 다른 스레드가 이미 LazyLoad를 끝냈을 수 있으므로 다시 확인한다.
       var connection = findConnection(connectionInfoRegistryProvider, connectionKey);
       if (connection != null) {
@@ -102,14 +102,13 @@ public final class ConnectionInfoUtil {
     return connectionInfoProperties.getLoaders().values().stream()
         .map(ConnectionInfoProperties.ConnectionInfoLoaderProperties::getConnections)
         .filter(Objects::nonNull)
-        .map((connections) -> connections.get(connectionKey))
-        .filter((connectionList) -> connectionList != null && !connectionList.isEmpty())
+        .map(connections -> connections.get(connectionKey))
+        .filter(connectionList -> connectionList != null && !connectionList.isEmpty())
         .map(List::getFirst)
         .findFirst()
-        .orElseThrow(
-            () ->
-                new IllegalStateException(
-                    "connection-info connection is not configured: " + connectionKey));
+        .orElseThrow(() ->
+            new IllegalStateException(
+                "connection-info connection is not configured: " + connectionKey));
   }
 
   /**
@@ -128,8 +127,8 @@ public final class ConnectionInfoUtil {
     return connectionInfoProperties.getLoaders().values().stream()
         .map(ConnectionInfoProperties.ConnectionInfoLoaderProperties::getConnections)
         .filter(Objects::nonNull)
-        .map((connections) -> connections.get(connectionKey))
-        .filter((connectionList) -> connectionList != null && !connectionList.isEmpty())
+        .map(connections -> connections.get(connectionKey))
+        .filter(connectionList -> connectionList != null && !connectionList.isEmpty())
         .flatMap(List::stream)
         .collect(Collectors.toList());
   }

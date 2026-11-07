@@ -2,10 +2,7 @@ package io.github.luversof.boot.connectioninfo;
 
 /**
  * ConnectionInfoKey
- * 
- * @author luversof
  *
+ * @author luversof
  */
-public record ConnectionInfoKey(String loaderKey, String connectionKey) {
-
-}
+public record ConnectionInfoKey(String loaderKey, String connectionKey) {}

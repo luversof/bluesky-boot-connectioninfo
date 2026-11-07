@@ -4,179 +4,157 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
  * MongoDB 기본 설정값 Properties
- * 
- * <p>
- * connection-info.mongodb.* (connection-map 제외)
+ *
+ * <p>connection-info.mongodb.* (connection-map 제외)
  */
 @ConfigurationProperties(prefix = "bluesky-boot.connection-info.mongodb")
 public class MongoDbDefaultProperties {
 
-	/**
-	 * 인증 데이터베이스
-	 */
-	private String authenticationDatabase = "admin";
+  /** 인증 데이터베이스 */
+  private String authenticationDatabase = "admin";
 
-	/**
-	 * ReadPreference: primary, primaryPreferred, secondary, secondaryPreferred,
-	 * nearest
-	 */
-	private String readPreference = "secondaryPreferred";
+  /** ReadPreference: primary, primaryPreferred, secondary, secondaryPreferred, nearest */
+  private String readPreference = "secondaryPreferred";
 
-	/**
-	 * ReadConcern level: local, majority, linearizable
-	 */
-	private String readConcernLevel = "local";
+  /** ReadConcern level: local, majority, linearizable */
+  private String readConcernLevel = "local";
 
-	/**
-	 * UUID Representation: JAVA_LEGACY, STANDARD, PYTHON_LEGACY, C_SHARP_LEGACY,
-	 * UNSPECIFIED
-	 */
-	private String uuidRepresentation = "JAVA_LEGACY";
+  /** UUID Representation: JAVA_LEGACY, STANDARD, PYTHON_LEGACY, C_SHARP_LEGACY, UNSPECIFIED */
+  private String uuidRepresentation = "JAVA_LEGACY";
 
-	/**
-	 * Connection Pool 설정
-	 */
-	private ConnectionPool connectionPool = new ConnectionPool();
+  /** Connection Pool 설정 */
+  private ConnectionPool connectionPool = new ConnectionPool();
 
-	/**
-	 * Write Concern 설정
-	 */
-	private WriteConcern writeConcern = new WriteConcern();
+  /** Write Concern 설정 */
+  private WriteConcern writeConcern = new WriteConcern();
 
-	public String getAuthenticationDatabase() {
-		return authenticationDatabase;
-	}
+  public String getAuthenticationDatabase() {
+    return authenticationDatabase;
+  }
 
-	public void setAuthenticationDatabase(String authenticationDatabase) {
-		this.authenticationDatabase = authenticationDatabase;
-	}
+  public void setAuthenticationDatabase(String authenticationDatabase) {
+    this.authenticationDatabase = authenticationDatabase;
+  }
 
-	public String getReadPreference() {
-		return readPreference;
-	}
+  public String getReadPreference() {
+    return readPreference;
+  }
 
-	public void setReadPreference(String readPreference) {
-		this.readPreference = readPreference;
-	}
+  public void setReadPreference(String readPreference) {
+    this.readPreference = readPreference;
+  }
 
-	public String getReadConcernLevel() {
-		return readConcernLevel;
-	}
+  public String getReadConcernLevel() {
+    return readConcernLevel;
+  }
 
-	public void setReadConcernLevel(String readConcernLevel) {
-		this.readConcernLevel = readConcernLevel;
-	}
+  public void setReadConcernLevel(String readConcernLevel) {
+    this.readConcernLevel = readConcernLevel;
+  }
 
-	public String getUuidRepresentation() {
-		return uuidRepresentation;
-	}
+  public String getUuidRepresentation() {
+    return uuidRepresentation;
+  }
 
-	public void setUuidRepresentation(String uuidRepresentation) {
-		this.uuidRepresentation = uuidRepresentation;
-	}
+  public void setUuidRepresentation(String uuidRepresentation) {
+    this.uuidRepresentation = uuidRepresentation;
+  }
 
-	public ConnectionPool getConnectionPool() {
-		return connectionPool;
-	}
+  public ConnectionPool getConnectionPool() {
+    return connectionPool;
+  }
 
-	public void setConnectionPool(ConnectionPool connectionPool) {
-		this.connectionPool = connectionPool;
-	}
+  public void setConnectionPool(ConnectionPool connectionPool) {
+    this.connectionPool = connectionPool;
+  }
 
-	public WriteConcern getWriteConcern() {
-		return writeConcern;
-	}
+  public WriteConcern getWriteConcern() {
+    return writeConcern;
+  }
 
-	public void setWriteConcern(WriteConcern writeConcern) {
-		this.writeConcern = writeConcern;
-	}
+  public void setWriteConcern(WriteConcern writeConcern) {
+    this.writeConcern = writeConcern;
+  }
 
-	/**
-	 * Connection Pool 설정
-	 */
-	public static class ConnectionPool {
-		private Integer maxSize = 30;
-		private Integer minSize = 10;
-		private Long maxWaitTimeMs = 120000L;
-		private Long maxConnectionLifeTimeMs = 1800000L;
-		private Long maxConnectionIdleTimeMs = 120000L;
+  /** Connection Pool 설정 */
+  public static class ConnectionPool {
+    private Integer maxSize = 30;
+    private Integer minSize = 10;
+    private Long maxWaitTimeMs = 120000L;
+    private Long maxConnectionLifeTimeMs = 1800000L;
+    private Long maxConnectionIdleTimeMs = 120000L;
 
-		public Integer getMaxSize() {
-			return maxSize;
-		}
+    public Integer getMaxSize() {
+      return maxSize;
+    }
 
-		public void setMaxSize(Integer maxSize) {
-			this.maxSize = maxSize;
-		}
+    public void setMaxSize(Integer maxSize) {
+      this.maxSize = maxSize;
+    }
 
-		public Integer getMinSize() {
-			return minSize;
-		}
+    public Integer getMinSize() {
+      return minSize;
+    }
 
-		public void setMinSize(Integer minSize) {
-			this.minSize = minSize;
-		}
+    public void setMinSize(Integer minSize) {
+      this.minSize = minSize;
+    }
 
-		public Long getMaxWaitTimeMs() {
-			return maxWaitTimeMs;
-		}
+    public Long getMaxWaitTimeMs() {
+      return maxWaitTimeMs;
+    }
 
-		public void setMaxWaitTimeMs(Long maxWaitTimeMs) {
-			this.maxWaitTimeMs = maxWaitTimeMs;
-		}
+    public void setMaxWaitTimeMs(Long maxWaitTimeMs) {
+      this.maxWaitTimeMs = maxWaitTimeMs;
+    }
 
-		public Long getMaxConnectionLifeTimeMs() {
-			return maxConnectionLifeTimeMs;
-		}
+    public Long getMaxConnectionLifeTimeMs() {
+      return maxConnectionLifeTimeMs;
+    }
 
-		public void setMaxConnectionLifeTimeMs(Long maxConnectionLifeTimeMs) {
-			this.maxConnectionLifeTimeMs = maxConnectionLifeTimeMs;
-		}
+    public void setMaxConnectionLifeTimeMs(Long maxConnectionLifeTimeMs) {
+      this.maxConnectionLifeTimeMs = maxConnectionLifeTimeMs;
+    }
 
-		public Long getMaxConnectionIdleTimeMs() {
-			return maxConnectionIdleTimeMs;
-		}
+    public Long getMaxConnectionIdleTimeMs() {
+      return maxConnectionIdleTimeMs;
+    }
 
-		public void setMaxConnectionIdleTimeMs(Long maxConnectionIdleTimeMs) {
-			this.maxConnectionIdleTimeMs = maxConnectionIdleTimeMs;
-		}
+    public void setMaxConnectionIdleTimeMs(Long maxConnectionIdleTimeMs) {
+      this.maxConnectionIdleTimeMs = maxConnectionIdleTimeMs;
+    }
+  }
 
-	}
+  /** Write Concern 설정 */
+  public static class WriteConcern {
+    /** W1, W2, W3, MAJORITY, ACKNOWLEDGED, UNACKNOWLEDGED */
+    private String w = "W1";
 
-	/**
-	 * Write Concern 설정
-	 */
-	public static class WriteConcern {
-		/**
-		 * W1, W2, W3, MAJORITY, ACKNOWLEDGED, UNACKNOWLEDGED
-		 */
-		private String w = "W1";
-		private Integer wTimeoutMs = 5000;
-		private Boolean journal = false;
+    private Integer wTimeoutMs = 5000;
+    private Boolean journal = false;
 
-		public String getW() {
-			return w;
-		}
+    public String getW() {
+      return w;
+    }
 
-		public void setW(String w) {
-			this.w = w;
-		}
+    public void setW(String w) {
+      this.w = w;
+    }
 
-		public Integer getwTimeoutMs() {
-			return wTimeoutMs;
-		}
+    public Integer getwTimeoutMs() {
+      return wTimeoutMs;
+    }
 
-		public void setwTimeoutMs(Integer wTimeoutMs) {
-			this.wTimeoutMs = wTimeoutMs;
-		}
+    public void setwTimeoutMs(Integer wTimeoutMs) {
+      this.wTimeoutMs = wTimeoutMs;
+    }
 
-		public Boolean getJournal() {
-			return journal;
-		}
+    public Boolean getJournal() {
+      return journal;
+    }
 
-		public void setJournal(Boolean journal) {
-			this.journal = journal;
-		}
-
-	}
+    public void setJournal(Boolean journal) {
+      this.journal = journal;
+    }
+  }
 }
