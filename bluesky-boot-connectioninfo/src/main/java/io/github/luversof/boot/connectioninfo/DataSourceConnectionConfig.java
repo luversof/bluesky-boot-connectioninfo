@@ -66,32 +66,14 @@ public class DataSourceConnectionConfig implements ConnectionConfig {
 	public boolean equals(final Object o) {
 		if (o == this)
 			return true;
-		if (!(o instanceof DataSourceConnectionConfig))
+		if (!(o instanceof DataSourceConnectionConfig other))
 			return false;
-		final DataSourceConnectionConfig other = (DataSourceConnectionConfig) o;
-		if (!other.canEqual((Object) this))
-			return false;
-		final Object this$connection = this.getConnection();
-		final Object other$connection = other.getConnection();
-		if (!Objects.equals(this$connection, other$connection))
-			return false;
-		final Object this$url = this.getUrl();
-		final Object other$url = other.getUrl();
-		if (!Objects.equals(this$url, other$url))
-			return false;
-		final Object this$username = this.getUsername();
-		final Object other$username = other.getUsername();
-		if (!Objects.equals(this$username, other$username))
-			return false;
-		final Object this$password = this.getPassword();
-		final Object other$password = other.getPassword();
-		if (!Objects.equals(this$password, other$password))
-			return false;
-		final Object this$extradata = this.getExtradata();
-		final Object other$extradata = other.getExtradata();
-		if (!Objects.equals(this$extradata, other$extradata))
-			return false;
-		return true;
+		return other.canEqual(this)
+				&& Objects.equals(this.getConnection(), other.getConnection())
+				&& Objects.equals(this.getUrl(), other.getUrl())
+				&& Objects.equals(this.getUsername(), other.getUsername())
+				&& Objects.equals(this.getPassword(), other.getPassword())
+				&& Objects.equals(this.getExtradata(), other.getExtradata());
 	}
 
 	protected boolean canEqual(final Object other) {
@@ -100,19 +82,8 @@ public class DataSourceConnectionConfig implements ConnectionConfig {
 
 	@Override
 	public int hashCode() {
-		final int PRIME = 59;
-		int result = 1;
-		final Object $connection = this.getConnection();
-		result = result * PRIME + ($connection == null ? 43 : $connection.hashCode());
-		final Object $url = this.getUrl();
-		result = result * PRIME + ($url == null ? 43 : $url.hashCode());
-		final Object $username = this.getUsername();
-		result = result * PRIME + ($username == null ? 43 : $username.hashCode());
-		final Object $password = this.getPassword();
-		result = result * PRIME + ($password == null ? 43 : $password.hashCode());
-		final Object $extradata = this.getExtradata();
-		result = result * PRIME + ($extradata == null ? 43 : $extradata.hashCode());
-		return result;
+		return Objects.hash(this.getConnection(), this.getUrl(), this.getUsername(), this.getPassword(),
+				this.getExtradata());
 	}
 
 }

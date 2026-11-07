@@ -17,7 +17,7 @@ class MongoDbMongoClientConnectionInfoLoaderTest {
 	private static final Logger log = LoggerFactory.getLogger(MongoDbMongoClientConnectionInfoLoaderTest.class);
 
 	@Test
-	@Disabled
+	@Disabled("localhost:27017 MongoDB가 필요한 수동 확인용 테스트")
 	void test() {
 		var connectionInfoReaderProperties = new ConnectionInfoReaderProperties();
 		connectionInfoReaderProperties.setProperties(

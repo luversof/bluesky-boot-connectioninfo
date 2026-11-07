@@ -13,26 +13,20 @@ public class PostgreSQLDataSourceConnectionInfoReader
 
 	protected String readerKey = "postgresql-datasource";
 
-	protected String readerQuery = """
-			SELECT connection, url, username, password, extradata
-			FROM "DataSourceConnectionConfig"
-			WHERE connection IN ({0})
-			""";
-
 	protected Driver readerDriver = new org.postgresql.Driver();
 
 	public PostgreSQLDataSourceConnectionInfoReader(ConnectionInfoProperties connectionInfoProperties) {
 		super(connectionInfoProperties);
+		this.readerQuery = """
+				SELECT connection, url, username, password, extradata
+				FROM "DataSourceConnectionConfig"
+				WHERE connection IN ({0})
+				""";
 	}
 
 	@Override
 	public String getReaderKey() {
 		return readerKey;
-	}
-
-	@Override
-	public String getReaderQuery() {
-		return readerQuery;
 	}
 
 	@Override

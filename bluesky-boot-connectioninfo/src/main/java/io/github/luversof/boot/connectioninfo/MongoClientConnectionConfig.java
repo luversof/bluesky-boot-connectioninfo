@@ -72,32 +72,14 @@ public class MongoClientConnectionConfig implements ConnectionConfig {
 	public boolean equals(final Object o) {
 		if (o == this)
 			return true;
-		if (!(o instanceof MongoClientConnectionConfig))
+		if (!(o instanceof MongoClientConnectionConfig other))
 			return false;
-		final MongoClientConnectionConfig other = (MongoClientConnectionConfig) o;
-		if (!other.canEqual((Object) this))
-			return false;
-		final Object this$connection = this.getConnection();
-		final Object other$connection = other.getConnection();
-		if (!Objects.equals(this$connection, other$connection))
-			return false;
-		final Object this$connectionString = this.getConnectionString();
-		final Object other$connectionString = other.getConnectionString();
-		if (!Objects.equals(this$connectionString, other$connectionString))
-			return false;
-		final Object this$database = this.getDatabase();
-		final Object other$database = other.getDatabase();
-		if (!Objects.equals(this$database, other$database))
-			return false;
-		final Object this$userName = this.getUserName();
-		final Object other$userName = other.getUserName();
-		if (!Objects.equals(this$userName, other$userName))
-			return false;
-		final Object this$password = this.getPassword();
-		final Object other$password = other.getPassword();
-		if (!Objects.equals(this$password, other$password))
-			return false;
-		return true;
+		return other.canEqual(this)
+				&& Objects.equals(this.getConnection(), other.getConnection())
+				&& Objects.equals(this.getConnectionString(), other.getConnectionString())
+				&& Objects.equals(this.getDatabase(), other.getDatabase())
+				&& Objects.equals(this.getUserName(), other.getUserName())
+				&& Objects.equals(this.getPassword(), other.getPassword());
 	}
 
 	protected boolean canEqual(final Object other) {
@@ -106,19 +88,8 @@ public class MongoClientConnectionConfig implements ConnectionConfig {
 
 	@Override
 	public int hashCode() {
-		final int PRIME = 59;
-		int result = 1;
-		final Object $connection = this.getConnection();
-		result = result * PRIME + ($connection == null ? 43 : $connection.hashCode());
-		final Object $connectionString = this.getConnectionString();
-		result = result * PRIME + ($connectionString == null ? 43 : $connectionString.hashCode());
-		final Object $database = this.getDatabase();
-		result = result * PRIME + ($database == null ? 43 : $database.hashCode());
-		final Object $userName = this.getUserName();
-		result = result * PRIME + ($userName == null ? 43 : $userName.hashCode());
-		final Object $password = this.getPassword();
-		result = result * PRIME + ($password == null ? 43 : $password.hashCode());
-		return result;
+		return Objects.hash(this.getConnection(), this.getConnectionString(), this.getDatabase(), this.getUserName(),
+				this.getPassword());
 	}
 
 }

@@ -41,20 +41,11 @@ public class ConnectionInfo<T> {
 	public boolean equals(final Object o) {
 		if (o == this)
 			return true;
-		if (!(o instanceof ConnectionInfo))
+		if (!(o instanceof ConnectionInfo<?> other))
 			return false;
-		final ConnectionInfo<?> other = (ConnectionInfo<?>) o;
-		if (!other.canEqual((Object) this))
-			return false;
-		final Object this$key = this.getKey();
-		final Object other$key = other.getKey();
-		if (!Objects.equals(this$key, other$key))
-			return false;
-		final Object this$connection = this.getConnection();
-		final Object other$connection = other.getConnection();
-		if (!Objects.equals(this$connection, other$connection))
-			return false;
-		return true;
+		return other.canEqual(this)
+				&& Objects.equals(this.getKey(), other.getKey())
+				&& Objects.equals(this.getConnection(), other.getConnection());
 	}
 
 	protected boolean canEqual(final Object other) {
@@ -63,13 +54,7 @@ public class ConnectionInfo<T> {
 
 	@Override
 	public int hashCode() {
-		final int PRIME = 59;
-		int result = 1;
-		final Object $key = this.getKey();
-		result = result * PRIME + ($key == null ? 43 : $key.hashCode());
-		final Object $connection = this.getConnection();
-		result = result * PRIME + ($connection == null ? 43 : $connection.hashCode());
-		return result;
+		return Objects.hash(this.getKey(), this.getConnection());
 	}
 
 }

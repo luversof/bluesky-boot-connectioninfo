@@ -107,19 +107,19 @@ public class PropertiesMongoClientConnectionInfoReader implements ConnectionInfo
 		return configList;
 	}
 
-	/**
-	 * MongoDB connectionString을 생성합니다.
-	 * 
-	 * @param connConfig MongoDB 연결 설정
-	 * @param username 복호화한 사용자명
-	 * @param password 복호화한 비밀번호
-	 * @return MongoDB connectionString
-	 */
 	/** 드라이버는 '+' 를 공백으로 풀지 않으므로 URLEncoder 의 '+' 를 %20 으로 바꾼다. */
 	private static String encodeUserInfo(String value) {
 		return URLEncoder.encode(value, StandardCharsets.UTF_8).replace("+", "%20");
 	}
 
+	/**
+	 * MongoDB connectionString을 생성합니다.
+	 *
+	 * @param connConfig MongoDB 연결 설정
+	 * @param username 복호화한 사용자명
+	 * @param password 복호화한 비밀번호
+	 * @return MongoDB connectionString
+	 */
 	String buildConnectionString(MongoDbConnectionMapProperties.MongoConnectionConfig connConfig, String username, String password) {
 		StringBuilder connectionString = new StringBuilder("mongodb://");
 

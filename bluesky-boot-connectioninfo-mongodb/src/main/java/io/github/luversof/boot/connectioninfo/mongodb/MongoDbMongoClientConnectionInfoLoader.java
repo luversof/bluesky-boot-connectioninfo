@@ -22,6 +22,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
+import com.mongodb.connection.ConnectionPoolSettings;
 
 import io.github.luversof.boot.connectioninfo.ConnectionInfo;
 import io.github.luversof.boot.connectioninfo.ConnectionInfoKey;
@@ -173,23 +174,8 @@ public class MongoDbMongoClientConnectionInfoLoader
 
 		var connectionPoolProperties = this.defaultProperties.getConnectionPool();
 		if (connectionPoolProperties != null) {
-			settingsBuilder.applyToConnectionPoolSettings(poolBuilder -> {
-				if (connectionString.getMaxConnectionPoolSize() == null && connectionPoolProperties.getMaxSize() != null) {
-					poolBuilder.maxSize(connectionPoolProperties.getMaxSize());
-				}
-				if (connectionString.getMinConnectionPoolSize() == null && connectionPoolProperties.getMinSize() != null) {
-					poolBuilder.minSize(connectionPoolProperties.getMinSize());
-				}
-				if (connectionString.getMaxWaitTime() == null && connectionPoolProperties.getMaxWaitTimeMs() != null) {
-					poolBuilder.maxWaitTime(connectionPoolProperties.getMaxWaitTimeMs(), TimeUnit.MILLISECONDS);
-				}
-				if (connectionString.getMaxConnectionLifeTime() == null && connectionPoolProperties.getMaxConnectionLifeTimeMs() != null) {
-					poolBuilder.maxConnectionLifeTime(connectionPoolProperties.getMaxConnectionLifeTimeMs(), TimeUnit.MILLISECONDS);
-				}
-				if (connectionString.getMaxConnectionIdleTime() == null && connectionPoolProperties.getMaxConnectionIdleTimeMs() != null) {
-					poolBuilder.maxConnectionIdleTime(connectionPoolProperties.getMaxConnectionIdleTimeMs(), TimeUnit.MILLISECONDS);
-				}
-			});
+			settingsBuilder.applyToConnectionPoolSettings(
+					poolBuilder -> applyConnectionPool(poolBuilder, connectionString, connectionPoolProperties));
 		}
 
 		if (connectionString.getReadPreference() == null) {
@@ -217,6 +203,25 @@ public class MongoDbMongoClientConnectionInfoLoader
 		}
 
 		return settingsBuilder.build();
+	}
+
+	private void applyConnectionPool(ConnectionPoolSettings.Builder poolBuilder, ConnectionString connectionString,
+			MongoDbDefaultProperties.ConnectionPool connectionPoolProperties) {
+		if (connectionString.getMaxConnectionPoolSize() == null && connectionPoolProperties.getMaxSize() != null) {
+			poolBuilder.maxSize(connectionPoolProperties.getMaxSize());
+		}
+		if (connectionString.getMinConnectionPoolSize() == null && connectionPoolProperties.getMinSize() != null) {
+			poolBuilder.minSize(connectionPoolProperties.getMinSize());
+		}
+		if (connectionString.getMaxWaitTime() == null && connectionPoolProperties.getMaxWaitTimeMs() != null) {
+			poolBuilder.maxWaitTime(connectionPoolProperties.getMaxWaitTimeMs(), TimeUnit.MILLISECONDS);
+		}
+		if (connectionString.getMaxConnectionLifeTime() == null && connectionPoolProperties.getMaxConnectionLifeTimeMs() != null) {
+			poolBuilder.maxConnectionLifeTime(connectionPoolProperties.getMaxConnectionLifeTimeMs(), TimeUnit.MILLISECONDS);
+		}
+		if (connectionString.getMaxConnectionIdleTime() == null && connectionPoolProperties.getMaxConnectionIdleTimeMs() != null) {
+			poolBuilder.maxConnectionIdleTime(connectionPoolProperties.getMaxConnectionIdleTimeMs(), TimeUnit.MILLISECONDS);
+		}
 	}
 
 	private void applyWriteConcern(MongoClientConnectionConfig connectionConfig, MongoClientSettings.Builder settingsBuilder) {
@@ -254,7 +259,7 @@ public class MongoDbMongoClientConnectionInfoLoader
 		try {
 			applier.accept(value);
 		}
-		catch (IllegalArgumentException exception) {
+		catch (IllegalArgumentException _) {
 			log.warn("ignore invalid connection-info.mongodb.{} ({}) for connection ({})", propertyName, value,
 					connectionConfig.getConnection());
 		}

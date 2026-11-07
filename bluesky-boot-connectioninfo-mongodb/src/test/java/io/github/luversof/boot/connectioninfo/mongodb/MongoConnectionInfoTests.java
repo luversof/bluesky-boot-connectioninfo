@@ -33,11 +33,12 @@ class MongoConnectionInfoTests {
 	void destroyClosesCreatedClients() {
 		var loader = new MongoDbMongoClientConnectionInfoLoader(new ConnectionInfoProperties(), List.of(reader("r1", config("a"))));
 		var client = loader.load(List.of("a")).getFirst().getConnection();
+		var databaseNames = client.listDatabaseNames();
 
 		loader.destroy();
 
 		// 닫힌 클라이언트는 서버를 찾지 않고 바로 실패한다(열려 있으면 서버 선택을 30초 기다린다)
-		org.assertj.core.api.Assertions.assertThatThrownBy(() -> client.listDatabaseNames().first())
+		org.assertj.core.api.Assertions.assertThatThrownBy(databaseNames::first)
 				.isInstanceOf(IllegalStateException.class);
 	}
 

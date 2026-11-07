@@ -44,7 +44,7 @@ class ConnectionInfoTests {
 			.withUserConfiguration(ConnectionInfoJdbcAutoConfiguration.class);
 
 	@Test
-	@Disabled
+	@Disabled("mariadb.bluesky.local, mssql.bluesky.local 접속이 필요한 수동 확인용 테스트")
 	void connectionInfoProperties() {
 		this.contextRunner.run(context -> {
 			var connectionInfoProperties = context.getBean(ConnectionInfoProperties.class);
@@ -54,7 +54,7 @@ class ConnectionInfoTests {
 	}
 
 	@Test
-	@Disabled
+	@Disabled("mariadb.bluesky.local, mssql.bluesky.local 접속이 필요한 수동 확인용 테스트")
 	void mariaDbDataSourceConnectionInfoTest() {
 		this.contextRunner.run(context -> {
 
@@ -73,7 +73,7 @@ class ConnectionInfoTests {
 	}
 
 	@Test
-	@Disabled
+	@Disabled("mariadb.bluesky.local, mssql.bluesky.local 접속이 필요한 수동 확인용 테스트")
 	void mariaDbDataSourceConnectionInfoReaderTest() {
 		this.contextRunner.run(context -> {
 			var connectionInfoProperties = context.getBean(ConnectionInfoProperties.class);
@@ -88,7 +88,7 @@ class ConnectionInfoTests {
 	}
 
 	@Test
-	@Disabled
+	@Disabled("mariadb.bluesky.local, mssql.bluesky.local 접속이 필요한 수동 확인용 테스트")
 	void sqlServerDataSourceConnectionInfoReaderTest() {
 		this.contextRunner.run(context -> {
 			var connectionInfoProperties = context.getBean(ConnectionInfoProperties.class);
@@ -104,7 +104,7 @@ class ConnectionInfoTests {
 
 	@SuppressWarnings("unchecked")
 	@Test
-	@Disabled
+	@Disabled("mariadb.bluesky.local, mssql.bluesky.local 접속이 필요한 수동 확인용 테스트")
 	void connectionInfoRegistryTest() {
 		this.contextRunner.run(context -> {
 			var type = ResolvableType.forClassWithGenerics(ConnectionInfoRegistry.class, HikariDataSource.class);
