@@ -13,8 +13,11 @@ public class MongoDbDefaultProperties {
   /** 인증 데이터베이스 */
   private String authenticationDatabase = "admin";
 
-  /** ReadPreference: primary, primaryPreferred, secondary, secondaryPreferred, nearest */
-  private String readPreference = "secondaryPreferred";
+  /**
+   * ReadPreference: primary, primaryPreferred, secondary, secondaryPreferred, nearest. 비우면 드라이버 기본값
+   * primary를 쓴다. secondary 계열은 방금 쓴 데이터를 못 읽을 수 있어 기본값으로 두지 않는다.
+   */
+  private String readPreference;
 
   /** ReadConcern level: local, majority, linearizable */
   private String readConcernLevel = "local";
@@ -79,7 +82,8 @@ public class MongoDbDefaultProperties {
   /** Connection Pool 설정 */
   public static class ConnectionPool {
     private Integer maxSize = 30;
-    private Integer minSize = 10;
+    // 비우면 드라이버 기본값 0. 미리 열어 두는 연결은 host × connection × 인스턴스 수만큼 곱해진다.
+    private Integer minSize;
     private Long maxWaitTimeMs = 120000L;
     private Long maxConnectionLifeTimeMs = 1800000L;
     private Long maxConnectionIdleTimeMs = 120000L;

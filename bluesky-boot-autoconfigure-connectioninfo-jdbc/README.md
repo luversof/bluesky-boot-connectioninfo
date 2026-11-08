@@ -47,6 +47,10 @@ bluesky-boot.connection-config.readers.mariadb-datasource.properties.password={c
 bluesky-boot.connection-info.loaders.hikaridatasource.enabled=true
 bluesky-boot.connection-info.loaders.hikaridatasource.connections.app1=connection1,connection2
 bluesky-boot.connection-info.loaders.hikaridatasource.connections.app2=connection3,connection4
+# (선택) 모든 HikariDataSource에 적용할 HikariConfig 속성. 이름은 HikariConfig 속성 그대로(camelCase) 쓴다.
+# 지정하지 않으면 HikariCP 기본값(connection마다 연결 10개 유지)을 쓴다.
+bluesky-boot.connection-info.loaders.hikaridatasource.properties.maximumPoolSize=5
+bluesky-boot.connection-info.loaders.hikaridatasource.properties.minimumIdle=1
 ```
 
 ### 데이터베이스 스키마

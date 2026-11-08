@@ -76,6 +76,9 @@ public class ConnectionInfoProperties {
     /** Manage loader call information Currently used in an informal form. */
     private Map<String, List<String>> connections;
 
+    /** Settings applied to every connection the loader creates (e.g. HikariCP maximumPoolSize) */
+    private Map<String, String> properties;
+
     public ConnectionInfoLoaderProperties() {}
 
     public ConnectionInfoLoaderProperties(boolean enabled, Map<String, List<String>> connections) {
@@ -97,6 +100,14 @@ public class ConnectionInfoProperties {
 
     public void setConnections(Map<String, List<String>> connections) {
       this.connections = connections;
+    }
+
+    public Map<String, String> getProperties() {
+      return properties;
+    }
+
+    public void setProperties(Map<String, String> properties) {
+      this.properties = properties;
     }
   }
 }

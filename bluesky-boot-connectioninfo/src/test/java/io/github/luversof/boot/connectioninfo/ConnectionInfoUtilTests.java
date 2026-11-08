@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -46,6 +47,18 @@ class ConnectionInfoUtilTests {
     }
   }
 
+  @Test
+  void doesNotReloadMissingKeyRightAway() {
+    try (var context = new AnnotationConfigApplicationContext(Config.class)) {
+      ConnectionInfoUtil.setApplicationContext(context);
+
+      assertThat(ConnectionInfoUtil.getConnection("missing", Integer.class)).isNull();
+      assertThat(ConnectionInfoUtil.getConnection("MISSING", Integer.class)).isNull();
+
+      assertThat(context.getBean(IntLoader.class).lazyLoadCount).hasValue(1);
+    }
+  }
+
   private static List<String> keys(
       AnnotationConfigApplicationContext context, String registryName) {
     return context
@@ -64,6 +77,8 @@ class ConnectionInfoUtilTests {
 
     private final T lazyConnection;
 
+    final AtomicInteger lazyLoadCount = new AtomicInteger();
+
     TestLoader(String lazyKey, T lazyConnection) {
       this.lazyKey = lazyKey;
       this.lazyConnection = lazyConnection;
@@ -76,6 +91,7 @@ class ConnectionInfoUtilTests {
 
     @Override
     public List<ConnectionInfo<T>> load(List<String> connectionList) {
+      lazyLoadCount.incrementAndGet();
       if (!connectionList.contains(lazyKey)) {
         return List.of();
       }

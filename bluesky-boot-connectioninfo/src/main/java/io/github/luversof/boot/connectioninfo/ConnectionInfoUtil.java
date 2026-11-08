@@ -1,6 +1,8 @@
 package io.github.luversof.boot.connectioninfo;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,13 +18,50 @@ public final class ConnectionInfoUtil {
 
   private static volatile ApplicationContext applicationContext;
 
-  /** LazyLoad를 connectionKey 단위로 직렬화하기 위한 lock. connectionKey 개수만큼만 늘어난다. */
-  private static final Map<String, Object> lazyLoadLockMap = new ConcurrentHashMap<>();
+  /**
+   * LazyLoad를 connectionKey 단위로 직렬화하기 위한 lock. 개수가 고정이라 요청 key가 늘어도 메모리가 늘지 않고, registry처럼 대소문자를
+   * 구분하지 않는다. 다른 key가 같은 lock을 나눠 쓸 수 있지만 LazyLoad는 드물어 문제되지 않는다.
+   */
+  private static final Object[] lazyLoadLocks = new Object[64];
+
+  static {
+    Arrays.setAll(lazyLoadLocks, _ -> new Object());
+  }
+
+  /** 못 찾은 connection(타입:key)과 다시 조회할 수 있는 시각. 없는 key를 부를 때마다 메타 DB를 다시 조회하지 않기 위함이다. */
+  private static final Map<String, Long> missUntilMap = new ConcurrentHashMap<>();
+
+  private static final long MISS_CACHE_MILLIS = 60_000L;
+
+  private static final int MISS_CACHE_MAX_SIZE = 10_000;
 
   private ConnectionInfoUtil() {}
 
   public static void setApplicationContext(ApplicationContext applicationContext) {
     ConnectionInfoUtil.applicationContext = applicationContext;
+    missUntilMap.clear();
+  }
+
+  private static Object lazyLoadLock(String connectionKey) {
+    return lazyLoadLocks[
+        Math.floorMod(connectionKey.toLowerCase(Locale.ROOT).hashCode(), lazyLoadLocks.length)];
+  }
+
+  private static String missKey(Class<?> connectionType, String connectionKey) {
+    return connectionType.getName() + ":" + connectionKey.toLowerCase(Locale.ROOT);
+  }
+
+  private static boolean recentlyMissed(String missKey) {
+    var missUntil = missUntilMap.get(missKey);
+    return missUntil != null && missUntil > System.currentTimeMillis();
+  }
+
+  private static void recordMiss(String missKey) {
+    // shortcut: 꽉 차면 통째로 비운다. 서로 다른 없는 key가 1분에 만 개를 넘게 들어오면 LRU로 바꾼다.
+    if (missUntilMap.size() >= MISS_CACHE_MAX_SIZE) {
+      missUntilMap.clear();
+    }
+    missUntilMap.put(missKey, System.currentTimeMillis() + MISS_CACHE_MILLIS);
   }
 
   /**
@@ -49,10 +88,18 @@ public final class ConnectionInfoUtil {
       return connection;
     }
 
-    synchronized (lazyLoadLockMap.computeIfAbsent(connectionKey, _ -> new Object())) {
+    var missKey = missKey(connectionType, connectionKey);
+    if (recentlyMissed(missKey)) {
+      return null;
+    }
+
+    synchronized (lazyLoadLock(connectionKey)) {
       connection = findConnection(connectionInfoRegistryProvider, connectionKey);
       if (connection != null) {
         return connection;
+      }
+      if (recentlyMissed(missKey)) {
+        return null;
       }
 
       // Loader는 두 번째 제네릭(ConnectionConfig)이 제각각이라 타입으로 찾을 수 없어 클래스의 제네릭으로 거른다.
@@ -67,6 +114,7 @@ public final class ConnectionInfoUtil {
           return connectionInfoList.getFirst().getConnection();
         }
       }
+      recordMiss(missKey);
     }
     return null;
   }
@@ -110,12 +158,20 @@ public final class ConnectionInfoUtil {
     // 없으면 Loader를 통해 LazyLoad를 시도
     // 같은 connectionKey를 동시에 요청하면 Connection(MongoClient/DataSource)이 중복 생성되고,
     // registry에서 조회되지 않는 쪽은 닫히지 않은 채 프로세스 수명 내내 남는다. connectionKey 단위로 직렬화한다.
-    // (다른 connectionKey끼리는 서로 다른 lock이므로 경합하지 않는다)
-    synchronized (lazyLoadLockMap.computeIfAbsent(connectionKey, _ -> new Object())) {
+    // (lock은 고정 개수라 다른 connectionKey가 가끔 같은 lock을 기다릴 수 있다)
+    // 못 찾은 key는 MISS_CACHE_MILLIS 동안 기억해 메타 DB를 다시 조회하지 않는다.
+    var missKey = missKey(Object.class, connectionKey);
+    if (recentlyMissed(missKey)) {
+      return null;
+    }
+    synchronized (lazyLoadLock(connectionKey)) {
       // lock 대기 중 다른 스레드가 이미 LazyLoad를 끝냈을 수 있으므로 다시 확인한다.
       var connection = findConnection(connectionInfoRegistryProvider, connectionKey);
       if (connection != null) {
         return connection;
+      }
+      if (recentlyMissed(missKey)) {
+        return null;
       }
 
       ObjectProvider<ConnectionInfoLoader<T, ?>> connectionInfoLoaderProvider =
@@ -129,6 +185,7 @@ public final class ConnectionInfoUtil {
           return connectionInfoList.getFirst().getConnection();
         }
       }
+      recordMiss(missKey);
     }
 
     // 그래도 없으면 null 반환
