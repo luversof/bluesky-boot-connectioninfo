@@ -70,6 +70,10 @@ public abstract class AbstractDataSourceConnectionInfoLoader<
 
   @Override
   public List<ConnectionInfo<T>> load(List<String> connectionList) {
+    // 빈 목록으로 조회하면 리더 쿼리가 "IN ()"이 되어 SQL 문법 오류가 난다.
+    if (connectionList == null || connectionList.isEmpty()) {
+      return Collections.emptyList();
+    }
 
     log.debug(
         "connectionInfoReaderKeyList : {}",

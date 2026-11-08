@@ -10,6 +10,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.ResolvableType;
+import org.springframework.util.ClassUtils;
 
 public final class ConnectionInfoUtil {
 
@@ -24,6 +25,66 @@ public final class ConnectionInfoUtil {
     ConnectionInfoUtil.applicationContext = applicationContext;
   }
 
+  /**
+   * connectionKey에 해당하는 connection을 connectionType의 Registry/Loader에서만 찾는다.
+   *
+   * <p>connectionType은 Registry에 등록된 타입 그대로 지정한다(예: {@code HikariDataSource.class}, {@code
+   * MongoClient.class}). LazyLoad 결과도 그 타입의 Registry에 추가되므로 다른 타입의 Registry가 섞이지 않는다.
+   *
+   * @param connectionKey connection key
+   * @param connectionType Registry에 등록된 connection 타입
+   * @return connection, 없으면 null
+   */
+  public static <T> T getConnection(String connectionKey, Class<T> connectionType) {
+    ObjectProvider<ConnectionInfoRegistry<T>> connectionInfoRegistryProvider =
+        applicationContext.getBeanProvider(
+            ResolvableType.forClassWithGenerics(ConnectionInfoRegistry.class, connectionType));
+    var targetRegistry = connectionInfoRegistryProvider.orderedStream().findFirst().orElse(null);
+    if (targetRegistry == null) {
+      return null;
+    }
+
+    var connection = findConnection(connectionInfoRegistryProvider, connectionKey);
+    if (connection != null) {
+      return connection;
+    }
+
+    synchronized (lazyLoadLockMap.computeIfAbsent(connectionKey, _ -> new Object())) {
+      connection = findConnection(connectionInfoRegistryProvider, connectionKey);
+      if (connection != null) {
+        return connection;
+      }
+
+      // Loader는 두 번째 제네릭(ConnectionConfig)이 제각각이라 타입으로 찾을 수 없어 클래스의 제네릭으로 거른다.
+      for (var loader : applicationContext.getBeanProvider(ConnectionInfoLoader.class)) {
+        if (!loadsType(loader, connectionType)) {
+          continue;
+        }
+        @SuppressWarnings("unchecked")
+        List<ConnectionInfo<T>> connectionInfoList = loader.load(List.of(connectionKey));
+        if (connectionInfoList != null && !connectionInfoList.isEmpty()) {
+          targetRegistry.addConnectionInfoList(connectionInfoList);
+          return connectionInfoList.getFirst().getConnection();
+        }
+      }
+    }
+    return null;
+  }
+
+  private static boolean loadsType(Object loader, Class<?> connectionType) {
+    var loadedType =
+        ResolvableType.forClass(ClassUtils.getUserClass(loader))
+            .as(ConnectionInfoLoader.class)
+            .resolveGeneric(0);
+    return loadedType != null && connectionType.isAssignableFrom(loadedType);
+  }
+
+  /**
+   * connectionKey에 해당하는 connection을 모든 Registry/Loader에서 찾는다.
+   *
+   * <p>반환 타입을 검사하지 않고, LazyLoad 결과가 다른 타입의 Registry에 추가될 수 있다. JDBC와 MongoDB를 함께 쓰면 {@link
+   * #getConnection(String, Class)}를 사용한다.
+   */
   public static <T> T getConnection(String connectionKey) {
     // ConnectionInfoRegistry에서 기본 ConnectionInfo를 가져오고
 
