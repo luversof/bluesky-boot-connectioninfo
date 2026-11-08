@@ -54,5 +54,13 @@
 			<artifactId>postgresql</artifactId>
 			<optional>true</optional>
 		</dependency>
+
+		<!-- (s) test -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<!-- (e) test -->
 	</dependencies>
 </project>

@@ -59,6 +59,42 @@ class ConnectionInfoUtilTests {
     }
   }
 
+  @Test
+  void returnsNullWithoutRegistryOfRequestedType() {
+    try (var context = new AnnotationConfigApplicationContext(Config.class)) {
+      ConnectionInfoUtil.setApplicationContext(context);
+
+      assertThat(ConnectionInfoUtil.getConnection("int-lazy", Long.class)).isNull();
+      assertThat(context.getBean(IntLoader.class).lazyLoadCount).hasValue(0);
+    }
+  }
+
+  @Test
+  void untypedLookupLoadsLazyConnectionOnce() {
+    try (var context = new AnnotationConfigApplicationContext(Config.class)) {
+      ConnectionInfoUtil.setApplicationContext(context);
+
+      assertThat(ConnectionInfoUtil.<Integer>getConnection("int-eager")).isEqualTo(1);
+      assertThat(ConnectionInfoUtil.<Integer>getConnection("int-lazy")).isEqualTo(2);
+      assertThat(ConnectionInfoUtil.<Integer>getConnection("int-lazy")).isEqualTo(2);
+
+      assertThat(context.getBean(IntLoader.class).lazyLoadCount).hasValue(1);
+    }
+  }
+
+  @Test
+  void untypedLookupDoesNotReloadMissingKeyRightAway() {
+    try (var context = new AnnotationConfigApplicationContext(Config.class)) {
+      ConnectionInfoUtil.setApplicationContext(context);
+
+      assertThat(ConnectionInfoUtil.<Object>getConnection("missing")).isNull();
+      assertThat(ConnectionInfoUtil.<Object>getConnection("Missing")).isNull();
+
+      assertThat(context.getBean(IntLoader.class).lazyLoadCount).hasValue(1);
+      assertThat(context.getBean(StrLoader.class).lazyLoadCount).hasValue(1);
+    }
+  }
+
   private static List<String> keys(
       AnnotationConfigApplicationContext context, String registryName) {
     return context
