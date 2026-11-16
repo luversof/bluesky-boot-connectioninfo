@@ -188,11 +188,11 @@
 			<id>local</id>
 		</profile>
 		<profile>
-			<id>nexus-k8s</id>
+			<id>k8s-ci</id>
 			<repositories>
 				<repository>
-					<id>bluesky-nexus-k8s</id>
-					<url>http://nexus-service:8082/repository/maven-public/</url>
+					<id>reposilite-public</id>
+					<url>http://reposilite-service:8080/public/</url>
 					<releases>
 						<enabled>true</enabled>
 					</releases>
@@ -204,12 +204,12 @@
 			</repositories>
 			<distributionManagement>
 				<repository>
-					<id>bluesky-releases</id>
-					<url>http://nexus-service:8082/repository/maven-releases/</url>
+					<id>reposilite-releases</id>
+					<url>http://reposilite-service:8080/releases/</url>
 				</repository>
 				<snapshotRepository>
-					<id>bluesky-snapshots</id>
-					<url>http://nexus-service:8082/repository/maven-snapshots/</url>
+					<id>reposilite-snapshots</id>
+					<url>http://reposilite-service:8080/snapshots/</url>
 				</snapshotRepository>
 			</distributionManagement>
 		</profile>
