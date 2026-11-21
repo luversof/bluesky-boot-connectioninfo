@@ -116,18 +116,14 @@ public abstract class AbstractConnectionInfoLoader<T, C extends ConnectionConfig
         log.warn(
             "skip database connection without connection name from reader ({})",
             connectionInfoReader.getReaderKey());
-        continue;
-      }
-
-      if (containsConnection(connectionConfigList, connectionConfig.getConnection())) {
+      } else if (containsConnection(connectionConfigList, connectionConfig.getConnection())) {
         log.warn(
             "skip duplicated database connection ({}) from reader ({})",
             connectionConfig.getConnection(),
             connectionInfoReader.getReaderKey());
-        continue;
+      } else {
+        connectionConfigList.add(connectionConfig);
       }
-
-      connectionConfigList.add(connectionConfig);
     }
   }
 

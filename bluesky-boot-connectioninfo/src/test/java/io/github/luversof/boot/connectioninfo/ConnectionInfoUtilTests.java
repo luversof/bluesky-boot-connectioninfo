@@ -7,6 +7,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
@@ -163,8 +164,9 @@ class ConnectionInfoUtilTests {
       lazyLoadCount.incrementAndGet();
       if (loadDelayMillis > 0) {
         try {
-          Thread.sleep(loadDelayMillis);
-        } catch (InterruptedException e) {
+          // 아무도 countDown하지 않는 latch를 기다려 load를 loadDelayMillis만큼 늦춘다
+          new CountDownLatch(1).await(loadDelayMillis, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException _) {
           Thread.currentThread().interrupt();
         }
       }
