@@ -132,7 +132,10 @@ public final class ConnectionInfoUtil {
    *
    * <p>반환 타입을 검사하지 않고, LazyLoad 결과가 다른 타입의 Registry에 추가될 수 있다. JDBC와 MongoDB를 함께 쓰면 {@link
    * #getConnection(String, Class)}를 사용한다.
+   *
+   * @deprecated 반환 타입을 검사하지 않는다. {@link #getConnection(String, Class)}를 사용한다.
    */
+  @Deprecated(since = "4.1.0", forRemoval = true)
   public static <T> T getConnection(String connectionKey) {
     // ConnectionInfoRegistry에서 기본 ConnectionInfo를 가져오고
 
@@ -211,18 +214,7 @@ public final class ConnectionInfoUtil {
    * ConnectionInfo -> Connection
    */
   public static String getConnectionName(String connectionKey) {
-    var connectionInfoProperties = applicationContext.getBean(ConnectionInfoProperties.class);
-
-    if (connectionInfoProperties == null || connectionInfoProperties.getLoaders() == null) {
-      throw new IllegalStateException("connection-info.loaders is not configured");
-    }
-
-    return connectionInfoProperties.getLoaders().values().stream()
-        .map(ConnectionInfoProperties.ConnectionInfoLoaderProperties::getConnections)
-        .filter(Objects::nonNull)
-        .map(connections -> connections.get(connectionKey))
-        .filter(connectionList -> connectionList != null && !connectionList.isEmpty())
-        .map(List::getFirst)
+    return getConnectionNameList(connectionKey).stream()
         .findFirst()
         .orElseThrow(() ->
             new IllegalStateException(

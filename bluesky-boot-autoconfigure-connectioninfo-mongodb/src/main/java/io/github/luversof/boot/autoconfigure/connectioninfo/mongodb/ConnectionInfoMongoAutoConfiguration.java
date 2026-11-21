@@ -29,6 +29,12 @@ import io.github.luversof.boot.connectioninfo.mongodb.PropertiesMongoClientConne
     value = "blueskyBootConnectionInfoMongoAutoConfiguration",
     before = {MongoAutoConfiguration.class, ConnectionInfoAutoConfiguration.class})
 @ConditionalOnClass(MongoClient.class)
+// ConnectionInfoProperties를 등록하는 ConnectionInfoAutoConfiguration과 같은 스위치. 꺼지면 loader가 의존 빈 없이 실패한다.
+@ConditionalOnProperty(
+    prefix = "bluesky-boot.connection-info",
+    name = "enabled",
+    havingValue = "true",
+    matchIfMissing = true)
 @EnableConfigurationProperties({
   MongoDbDefaultProperties.class,
   MongoDbConnectionMapProperties.class

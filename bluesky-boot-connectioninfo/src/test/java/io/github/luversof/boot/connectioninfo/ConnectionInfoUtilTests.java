@@ -3,7 +3,10 @@ package io.github.luversof.boot.connectioninfo;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
@@ -70,6 +73,33 @@ class ConnectionInfoUtilTests {
   }
 
   @Test
+  void concurrentLazyLoadCreatesConnectionOnce() throws Exception {
+    try (var context = new AnnotationConfigApplicationContext(Config.class);
+        var executor = Executors.newFixedThreadPool(2)) {
+      ConnectionInfoUtil.setApplicationContext(context);
+      var intLoader = context.getBean(IntLoader.class);
+      // 첫 스레드가 load 중일 때 두 번째 스레드가 들어오도록 load를 늦춘다
+      intLoader.loadDelayMillis = 200;
+      var start = new CountDownLatch(1);
+      Callable<Integer> call =
+          () -> {
+            start.await();
+            return ConnectionInfoUtil.getConnection("int-lazy", Integer.class);
+          };
+
+      var first = executor.submit(call);
+      var second = executor.submit(call);
+      start.countDown();
+
+      assertThat(first.get()).isEqualTo(2);
+      assertThat(second.get()).isEqualTo(2);
+      assertThat(intLoader.lazyLoadCount).hasValue(1);
+      assertThat(keys(context, "intRegistry")).containsExactly("int-eager", "int-lazy");
+    }
+  }
+
+  @Test
+  @SuppressWarnings("removal")
   void untypedLookupLoadsLazyConnectionOnce() {
     try (var context = new AnnotationConfigApplicationContext(Config.class)) {
       ConnectionInfoUtil.setApplicationContext(context);
@@ -83,6 +113,7 @@ class ConnectionInfoUtilTests {
   }
 
   @Test
+  @SuppressWarnings("removal")
   void untypedLookupDoesNotReloadMissingKeyRightAway() {
     try (var context = new AnnotationConfigApplicationContext(Config.class)) {
       ConnectionInfoUtil.setApplicationContext(context);
@@ -115,6 +146,8 @@ class ConnectionInfoUtilTests {
 
     final AtomicInteger lazyLoadCount = new AtomicInteger();
 
+    volatile long loadDelayMillis;
+
     TestLoader(String lazyKey, T lazyConnection) {
       this.lazyKey = lazyKey;
       this.lazyConnection = lazyConnection;
@@ -128,6 +161,13 @@ class ConnectionInfoUtilTests {
     @Override
     public List<ConnectionInfo<T>> load(List<String> connectionList) {
       lazyLoadCount.incrementAndGet();
+      if (loadDelayMillis > 0) {
+        try {
+          Thread.sleep(loadDelayMillis);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+        }
+      }
       if (!connectionList.contains(lazyKey)) {
         return List.of();
       }

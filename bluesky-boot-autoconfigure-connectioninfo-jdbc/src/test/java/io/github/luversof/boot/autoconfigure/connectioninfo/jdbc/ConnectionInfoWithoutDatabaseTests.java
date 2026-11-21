@@ -16,6 +16,7 @@ import io.github.luversof.boot.connectioninfo.ConnectionInfoDevCheckController;
 import io.github.luversof.boot.connectioninfo.ConnectionInfoKey;
 import io.github.luversof.boot.connectioninfo.ConnectionInfoProperties;
 import io.github.luversof.boot.connectioninfo.ConnectionInfoReader;
+import io.github.luversof.boot.connectioninfo.ConnectionInfoRegistry;
 import io.github.luversof.boot.connectioninfo.DataSourceConnectionConfig;
 import io.github.luversof.boot.connectioninfo.jdbc.AbstractDataSourceConnectionInfoLoader;
 
@@ -38,6 +39,18 @@ class ConnectionInfoWithoutDatabaseTests {
     this.contextRunner
         .withPropertyValues("bluesky-boot.dev-check.enabled=true")
         .run(context -> assertThat(context).hasSingleBean(ConnectionInfoDevCheckController.class));
+  }
+
+  @Test
+  void disabledSwitchTurnsOffJdbcAutoConfiguration() {
+    this.contextRunner
+        .withPropertyValues(
+            "bluesky-boot.connection-info.enabled=false",
+            "bluesky-boot.connection-info.loaders.hikaridatasource.enabled=true")
+        .run(context -> {
+          assertThat(context).hasNotFailed();
+          assertThat(context).doesNotHaveBean(ConnectionInfoRegistry.class);
+        });
   }
 
   @Test
@@ -109,7 +122,6 @@ class ConnectionInfoWithoutDatabaseTests {
     protected ConnectionInfo<ClosableDataSource> createConnectionInfo(
         DataSourceConnectionConfig connectionConfig) {
       var dataSource = new ClosableDataSource(() -> closed.add(connectionConfig.getConnection()));
-      createdDataSources.add(dataSource);
       return new ConnectionInfo<>(
           new ConnectionInfoKey(getLoaderKey(), connectionConfig.getConnection()), dataSource);
     }
