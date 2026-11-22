@@ -163,8 +163,7 @@ public final class ConnectionInfoUtil {
             .findFirst()
             .ifPresent(registry -> {
               registries.add(registry);
-              loaderTargets.add(
-                  new LoaderTarget((ConnectionInfoLoader<Object, ?>) loader, registry));
+              loaderTargets.add(new LoaderTarget(loader, registry));
             });
       }
     }
