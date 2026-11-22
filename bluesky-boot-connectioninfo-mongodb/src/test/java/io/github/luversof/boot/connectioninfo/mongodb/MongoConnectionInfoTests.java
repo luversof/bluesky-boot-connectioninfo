@@ -3,6 +3,7 @@ package io.github.luversof.boot.connectioninfo.mongodb;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
@@ -66,6 +67,31 @@ class MongoConnectionInfoTests {
     assertThat(new String(connectionString.getPassword())).isEqualTo("p@ss:w/rd%2 +");
     assertThat(connectionString.getHosts()).containsExactly("h1:27017", "h2:27017");
     assertThat(connectionString.getCredential().getSource()).isEqualTo("admin");
+  }
+
+  @Test
+  void skipsConnectionWithUsernameButNoPassword() {
+    var connectionMapProperties = new MongoDbConnectionMapProperties();
+    var complete = new MongoDbConnectionMapProperties.MongoConnectionConfig();
+    complete.setHosts("h1:27017");
+    complete.setDatabase("db");
+    var noPassword = new MongoDbConnectionMapProperties.MongoConnectionConfig();
+    noPassword.setHosts("h1:27017");
+    noPassword.setDatabase("db");
+    noPassword.setUsername("user");
+    connectionMapProperties.setConnectionMap(
+        Map.of("complete", complete, "no-password", noPassword));
+    var reader =
+        new PropertiesMongoClientConnectionInfoReader(
+            new ConnectionInfoProperties(),
+            new MongoDbDefaultProperties(),
+            connectionMapProperties);
+
+    var configList = reader.readConnectionConfigList(List.of("complete", "no-password"));
+
+    assertThat(configList)
+        .extracting(MongoClientConnectionConfig::getConnection)
+        .containsExactly("complete");
   }
 
   @Test

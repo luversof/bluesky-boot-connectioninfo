@@ -226,13 +226,13 @@ public class MultiTenantService {
 ## ConnectionInfoUtil (HikariDataSource / MongoClient 사용 사례)
 
 `ConnectionInfoUtil.getConnection(String connectionKey, Class<T> connectionType)`은 `connectionType`의 `ConnectionInfoRegistry`와
-`ConnectionInfoLoader`에서만 `connectionKey`를 찾습니다. `connectionType`에는 Registry에 등록된 타입을 그대로 지정합니다
-(JDBC는 `HikariDataSource.class`, MongoDB는 `MongoClient.class`). 상위 타입(예: `DataSource.class`)으로는 Registry를 찾지 못해 `null`이 반환됩니다.
+`ConnectionInfoLoader`에서만 `connectionKey`를 찾습니다. `connectionType`에는 Registry에 등록된 타입(JDBC는 `HikariDataSource.class`,
+MongoDB는 `MongoClient.class`)이나 그 상위 타입(예: `DataSource.class`)을 지정합니다.
 
 동작 요약:
 - 해당 타입의 레지스트리에서 `connectionKey`를 찾으면 첫 번째 연결 객체 반환. `connectionKey`는 대소문자를 구분하지 않습니다.
 - 못 찾으면 해당 타입을 만드는 `ConnectionInfoLoader`들에 대해 `load(List.of(connectionKey))`를 시도(지연 로드). 같은 키의 동시 요청은 한 번만 로드합니다.
-- 로드 성공 시 결과를 해당 타입의 레지스트리에 추가하고 연결 객체 반환. 실패 시 `null` 반환.
+- 로드 성공 시 결과를 그 연결을 만든 Loader 타입의 레지스트리에 추가하고 연결 객체 반환. 실패 시 `null` 반환.
 
 구체적 예시:
 
@@ -253,8 +253,7 @@ if (client != null) {
 ```
 
 주의사항:
-- 타입 없는 `getConnection(String connectionKey)`는 모든 레지스트리와 로더를 검색합니다. 반환 타입을 검사하지 않아 `ClassCastException`이 날 수 있고,
-  지연 로드 결과가 다른 타입의 레지스트리에 추가될 수 있습니다. JDBC와 MongoDB를 함께 쓰면 타입을 지정하는 메서드를 사용하세요.
+- 타입 없는 `getConnection(String connectionKey)`는 제거되었습니다. `getConnection(connectionKey, DataSource.class)`처럼 타입을 지정하세요.
 - 초기화 시점: 호출 시점에 해당 loader/registry의 자동구성이 완료되어 있어야 합니다. 초기화가 끝나기 전 호출하면 `null`이 반환될 수 있습니다.
 
 ## 확장 방법

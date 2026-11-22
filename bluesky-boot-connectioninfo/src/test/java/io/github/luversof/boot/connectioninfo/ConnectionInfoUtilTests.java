@@ -100,30 +100,28 @@ class ConnectionInfoUtilTests {
   }
 
   @Test
-  @SuppressWarnings("removal")
-  void untypedLookupLoadsLazyConnectionOnce() {
+  void findsConnectionBySuperTypeOfRegistryType() {
+    // registry 빈은 <T extends Integer>로 등록되어 Number로는 빈 검색에 걸리지 않는다(DataSource와 HikariDataSource 관계)
     try (var context = new AnnotationConfigApplicationContext(Config.class)) {
       ConnectionInfoUtil.setApplicationContext(context);
 
-      assertThat(ConnectionInfoUtil.<Integer>getConnection("int-eager")).isEqualTo(1);
-      assertThat(ConnectionInfoUtil.<Integer>getConnection("int-lazy")).isEqualTo(2);
-      assertThat(ConnectionInfoUtil.<Integer>getConnection("int-lazy")).isEqualTo(2);
+      assertThat(ConnectionInfoUtil.getConnection("int-eager", Number.class)).isEqualTo(1);
+      assertThat(ConnectionInfoUtil.getConnection("int-lazy", Number.class)).isEqualTo(2);
 
-      assertThat(context.getBean(IntLoader.class).lazyLoadCount).hasValue(1);
+      assertThat(keys(context, "intRegistry")).containsExactly("int-eager", "int-lazy");
+      assertThat(keys(context, "strRegistry")).isEmpty();
     }
   }
 
   @Test
-  @SuppressWarnings("removal")
-  void untypedLookupDoesNotReloadMissingKeyRightAway() {
+  void objectTypeAddsLazyConnectionToRegistryOfLoaderType() {
     try (var context = new AnnotationConfigApplicationContext(Config.class)) {
       ConnectionInfoUtil.setApplicationContext(context);
 
-      assertThat(ConnectionInfoUtil.<Object>getConnection("missing")).isNull();
-      assertThat(ConnectionInfoUtil.<Object>getConnection("Missing")).isNull();
+      assertThat(ConnectionInfoUtil.getConnection("str-lazy", Object.class)).isEqualTo("s");
 
-      assertThat(context.getBean(IntLoader.class).lazyLoadCount).hasValue(1);
-      assertThat(context.getBean(StrLoader.class).lazyLoadCount).hasValue(1);
+      assertThat(keys(context, "intRegistry")).containsExactly("int-eager");
+      assertThat(keys(context, "strRegistry")).containsExactly("str-lazy");
     }
   }
 

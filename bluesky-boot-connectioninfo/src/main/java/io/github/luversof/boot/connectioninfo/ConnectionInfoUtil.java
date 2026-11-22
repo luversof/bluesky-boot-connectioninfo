@@ -1,6 +1,8 @@
 package io.github.luversof.boot.connectioninfo;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -10,7 +12,6 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.ApplicationContext;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.ResolvableType;
 import org.springframework.util.ClassUtils;
 
@@ -35,11 +36,14 @@ public final class ConnectionInfoUtil {
 
   private static final int MISS_CACHE_MAX_SIZE = 10_000;
 
+  private static final Map<Class<?>, Lookup> lookupMap = new ConcurrentHashMap<>();
+
   private ConnectionInfoUtil() {}
 
   public static void setApplicationContext(ApplicationContext applicationContext) {
     ConnectionInfoUtil.applicationContext = applicationContext;
     missUntilMap.clear();
+    lookupMap.clear();
   }
 
   private static Object lazyLoadLock(String connectionKey) {
@@ -67,23 +71,21 @@ public final class ConnectionInfoUtil {
   /**
    * connectionKey에 해당하는 connection을 connectionType의 Registry/Loader에서만 찾는다.
    *
-   * <p>connectionType은 Registry에 등록된 타입 그대로 지정한다(예: {@code HikariDataSource.class}, {@code
-   * MongoClient.class}). LazyLoad 결과도 그 타입의 Registry에 추가되므로 다른 타입의 Registry가 섞이지 않는다.
+   * <p>connectionType은 Registry에 등록된 타입(예: {@code HikariDataSource.class}, {@code
+   * MongoClient.class})이나 그 상위 타입(예: {@code DataSource.class})을 지정한다. LazyLoad 결과는 그 connection을 만든
+   * Loader 타입의 Registry에 추가되므로 다른 타입의 Registry가 섞이지 않는다.
    *
    * @param connectionKey connection key
-   * @param connectionType Registry에 등록된 connection 타입
+   * @param connectionType 찾을 connection 타입
    * @return connection, 없으면 null
    */
   public static <T> T getConnection(String connectionKey, Class<T> connectionType) {
-    ObjectProvider<ConnectionInfoRegistry<T>> connectionInfoRegistryProvider =
-        applicationContext.getBeanProvider(
-            ResolvableType.forClassWithGenerics(ConnectionInfoRegistry.class, connectionType));
-    var targetRegistry = connectionInfoRegistryProvider.orderedStream().findFirst().orElse(null);
-    if (targetRegistry == null) {
+    var lookup = lookup(connectionType);
+    if (lookup.registries().isEmpty()) {
       return null;
     }
 
-    var connection = findConnection(connectionInfoRegistryProvider, connectionKey);
+    var connection = findConnection(lookup, connectionKey, connectionType);
     if (connection != null) {
       return connection;
     }
@@ -94,119 +96,92 @@ public final class ConnectionInfoUtil {
     }
 
     synchronized (lazyLoadLock(connectionKey)) {
-      connection = findConnection(connectionInfoRegistryProvider, connectionKey);
-      if (connection != null) {
-        return connection;
-      }
-      if (recentlyMissed(missKey)) {
-        return null;
-      }
-
-      // Loader는 두 번째 제네릭(ConnectionConfig)이 제각각이라 타입으로 찾을 수 없어 클래스의 제네릭으로 거른다.
-      for (var loader : applicationContext.getBeanProvider(ConnectionInfoLoader.class)) {
-        if (!loadsType(loader, connectionType)) {
-          continue;
-        }
-        @SuppressWarnings("unchecked")
-        List<ConnectionInfo<T>> connectionInfoList = loader.load(List.of(connectionKey));
-        if (connectionInfoList != null && !connectionInfoList.isEmpty()) {
-          targetRegistry.addConnectionInfoList(connectionInfoList);
-          return connectionInfoList.getFirst().getConnection();
-        }
-      }
-      recordMiss(missKey);
-    }
-    return null;
-  }
-
-  private static boolean loadsType(Object loader, Class<?> connectionType) {
-    var loadedType =
-        ResolvableType.forClass(ClassUtils.getUserClass(loader))
-            .as(ConnectionInfoLoader.class)
-            .resolveGeneric(0);
-    return loadedType != null && connectionType.isAssignableFrom(loadedType);
-  }
-
-  /**
-   * connectionKey에 해당하는 connection을 모든 Registry/Loader에서 찾는다.
-   *
-   * <p>반환 타입을 검사하지 않고, LazyLoad 결과가 다른 타입의 Registry에 추가될 수 있다. JDBC와 MongoDB를 함께 쓰면 {@link
-   * #getConnection(String, Class)}를 사용한다.
-   *
-   * @deprecated 반환 타입을 검사하지 않는다. {@link #getConnection(String, Class)}를 사용한다.
-   */
-  @Deprecated(since = "4.1.0", forRemoval = true)
-  public static <T> T getConnection(String connectionKey) {
-    // ConnectionInfoRegistry에서 기본 ConnectionInfo를 가져오고
-
-    ObjectProvider<ConnectionInfoRegistry<T>> connectionInfoRegistryProvider =
-        applicationContext.getBeanProvider(
-            ResolvableType.forType(new ParameterizedTypeReference<ConnectionInfoRegistry<T>>() {}));
-    // connectionKey에 해당하는 ConnectionInfo가 있으면 반환
-    // 이미 로드된 Connection은 여기서 반환되므로 lock을 거치지 않는다.
-    ConnectionInfoRegistry<T> targetRegistry = null;
-    for (var registry : connectionInfoRegistryProvider) {
-      targetRegistry = registry;
-      var connectionInfoList = registry.getConnectionInfo(connectionKey);
-      if (connectionInfoList != null && !connectionInfoList.isEmpty()) {
-        return connectionInfoList.getFirst().getConnection();
-      }
-    }
-
-    // Registry가 없으면 null 반환
-    if (targetRegistry == null) {
-      return null;
-    }
-
-    // 없으면 Loader를 통해 LazyLoad를 시도
-    // 같은 connectionKey를 동시에 요청하면 Connection(MongoClient/DataSource)이 중복 생성되고,
-    // registry에서 조회되지 않는 쪽은 닫히지 않은 채 프로세스 수명 내내 남는다. connectionKey 단위로 직렬화한다.
-    // (lock은 고정 개수라 다른 connectionKey가 가끔 같은 lock을 기다릴 수 있다)
-    // 못 찾은 key는 MISS_CACHE_MILLIS 동안 기억해 메타 DB를 다시 조회하지 않는다.
-    var missKey = missKey(Object.class, connectionKey);
-    if (recentlyMissed(missKey)) {
-      return null;
-    }
-    synchronized (lazyLoadLock(connectionKey)) {
       // lock 대기 중 다른 스레드가 이미 LazyLoad를 끝냈을 수 있으므로 다시 확인한다.
-      var connection = findConnection(connectionInfoRegistryProvider, connectionKey);
-      if (connection != null) {
+      connection = findConnection(lookup, connectionKey, connectionType);
+      if (connection != null || recentlyMissed(missKey)) {
         return connection;
       }
-      if (recentlyMissed(missKey)) {
-        return null;
-      }
 
-      ObjectProvider<ConnectionInfoLoader<T, ?>> connectionInfoLoaderProvider =
-          applicationContext.getBeanProvider(
-              ResolvableType.forType(
-                  new ParameterizedTypeReference<ConnectionInfoLoader<T, ?>>() {}));
-      for (var loader : connectionInfoLoaderProvider) {
-        var connectionInfoList = loader.load(List.of(connectionKey));
+      for (var loaderTarget : lookup.loaderTargets()) {
+        var connectionInfoList = loaderTarget.loader().load(List.of(connectionKey));
         if (connectionInfoList != null && !connectionInfoList.isEmpty()) {
-          targetRegistry.addConnectionInfoList(connectionInfoList);
-          return connectionInfoList.getFirst().getConnection();
+          loaderTarget.registry().addConnectionInfoList(connectionInfoList);
+          return connectionType.cast(connectionInfoList.getFirst().getConnection());
         }
       }
       recordMiss(missKey);
     }
-
-    // 그래도 없으면 null 반환
     return null;
   }
 
   private static <T> T findConnection(
-      ObjectProvider<ConnectionInfoRegistry<T>> connectionInfoRegistryProvider,
-      String connectionKey) {
-    for (var registry : connectionInfoRegistryProvider) {
+      Lookup lookup, String connectionKey, Class<T> connectionType) {
+    for (var registry : lookup.registries()) {
       var connectionInfoList = registry.getConnectionInfo(connectionKey);
       if (connectionInfoList != null && !connectionInfoList.isEmpty()) {
-        return connectionInfoList.getFirst().getConnection();
+        return connectionType.cast(connectionInfoList.getFirst().getConnection());
       }
     }
-
-    // 그래도 없으면 null 반환
     return null;
+  }
+
+  /** connectionType으로 찾을 Registry와 LazyLoad할 Loader. 제네릭 빈 검색은 Spring이 캐시하지 않아 타입별로 한 번만 구한다. */
+  private record Lookup(
+      List<ConnectionInfoRegistry<Object>> registries, List<LoaderTarget> loaderTargets) {}
+
+  /** Loader와 그 Loader가 만든 connection을 담을 Registry */
+  private record LoaderTarget(
+      ConnectionInfoLoader<Object, ?> loader, ConnectionInfoRegistry<Object> registry) {}
+
+  private static Lookup lookup(Class<?> connectionType) {
+    // computeIfAbsent는 빈 생성 중 다른 타입 조회가 다시 들어오면 재귀 갱신 예외가 나므로 쓰지 않는다.
+    var lookup = lookupMap.get(connectionType);
+    if (lookup == null) {
+      lookup = createLookup(connectionType);
+      var previous = lookupMap.putIfAbsent(connectionType, lookup);
+      if (previous != null) {
+        lookup = previous;
+      }
+    }
+    return lookup;
+  }
+
+  /**
+   * Registry 빈은 {@code ConnectionInfoRegistry<T extends HikariDataSource>}처럼 등록되어 상위
+   * 타입(DataSource)으로는 빈 검색에 걸리지 않는다. 그래서 같은 타입의 Registry에 더해, 상위 타입을 만드는 Loader의 실제 타입으로 Registry를
+   * 찾는다.
+   */
+  @SuppressWarnings("unchecked")
+  private static Lookup createLookup(Class<?> connectionType) {
+    var registries = new LinkedHashSet<>(registries(connectionType));
+    var loaderTargets = new ArrayList<LoaderTarget>();
+    // Loader는 두 번째 제네릭(ConnectionConfig)이 제각각이라 타입으로 찾을 수 없어 클래스의 제네릭으로 거른다.
+    for (var loader : applicationContext.getBeanProvider(ConnectionInfoLoader.class)) {
+      var loadedType = loadedType(loader);
+      if (loadedType != null && connectionType.isAssignableFrom(loadedType)) {
+        registries(loadedType).stream()
+            .findFirst()
+            .ifPresent(registry -> {
+              registries.add(registry);
+              loaderTargets.add(
+                  new LoaderTarget((ConnectionInfoLoader<Object, ?>) loader, registry));
+            });
+      }
+    }
+    return new Lookup(List.copyOf(registries), List.copyOf(loaderTargets));
+  }
+
+  private static List<ConnectionInfoRegistry<Object>> registries(Class<?> connectionType) {
+    ObjectProvider<ConnectionInfoRegistry<Object>> provider =
+        applicationContext.getBeanProvider(
+            ResolvableType.forClassWithGenerics(ConnectionInfoRegistry.class, connectionType));
+    return provider.orderedStream().toList();
+  }
+
+  private static Class<?> loadedType(Object loader) {
+    return ResolvableType.forClass(ClassUtils.getUserClass(loader))
+        .as(ConnectionInfoLoader.class)
+        .resolveGeneric(0);
   }
 
   /**

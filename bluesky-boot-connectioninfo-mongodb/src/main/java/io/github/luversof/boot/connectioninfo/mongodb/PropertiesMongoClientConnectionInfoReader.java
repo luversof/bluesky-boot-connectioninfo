@@ -5,6 +5,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.github.luversof.boot.connectioninfo.ConnectionInfoProperties;
 import io.github.luversof.boot.connectioninfo.ConnectionInfoReader;
 import io.github.luversof.boot.connectioninfo.MongoClientConnectionConfig;
@@ -52,6 +55,9 @@ import io.github.luversof.boot.security.crypto.factory.TextEncryptorFactories;
 public class PropertiesMongoClientConnectionInfoReader
     implements ConnectionInfoReader<MongoClientConnectionConfig> {
 
+  private static final Logger log =
+      LoggerFactory.getLogger(PropertiesMongoClientConnectionInfoReader.class);
+
   protected String readerKey = "properties-mongoclient";
 
   protected final ConnectionInfoProperties connectionInfoProperties;
@@ -75,35 +81,47 @@ public class PropertiesMongoClientConnectionInfoReader
   @Override
   public List<MongoClientConnectionConfig> readConnectionConfigList(List<String> connectionList) {
     List<MongoClientConnectionConfig> configList = new ArrayList<>();
-    var encryptor = TextEncryptorFactories.getDelegatingTextEncryptor();
-
     for (String connectionName : connectionList) {
-      // MongoDbConnectionMapProperties에서 설정 가져오기
-      MongoDbConnectionMapProperties.MongoConnectionConfig connConfig =
-          connectionMapProperties.getConnectionMap().get(connectionName);
-
-      if (connConfig == null || connConfig.getHosts() == null || connConfig.getDatabase() == null) {
-        // 필수 정보가 없으면 skip
-        continue;
+      var config = readConnectionConfig(connectionName);
+      if (config != null) {
+        configList.add(config);
       }
+    }
+    return configList;
+  }
 
-      MongoClientConnectionConfig config = new MongoClientConnectionConfig();
-      config.setConnection(connectionName);
-      config.setDatabase(connConfig.getDatabase());
+  /** connection-map 설정 하나를 읽는다. 필수 정보가 없거나 계정 정보가 반쪽이면 null. */
+  private MongoClientConnectionConfig readConnectionConfig(String connectionName) {
+    // MongoDbConnectionMapProperties에서 설정 가져오기
+    MongoDbConnectionMapProperties.MongoConnectionConfig connConfig =
+        connectionMapProperties.getConnectionMap().get(connectionName);
 
-      // username/password는 암호화되어 있을 수 있으므로 복호화
-      String username =
-          connConfig.getUsername() == null ? null : encryptor.decrypt(connConfig.getUsername());
-      String password =
-          connConfig.getPassword() == null ? null : encryptor.decrypt(connConfig.getPassword());
-      config.setUserName(username);
-      config.setPassword(password);
-      config.setConnectionString(buildConnectionString(connConfig, username, password));
-
-      configList.add(config);
+    if (connConfig == null || connConfig.getHosts() == null || connConfig.getDatabase() == null) {
+      // 필수 정보가 없으면 skip
+      return null;
     }
 
-    return configList;
+    // username/password는 암호화되어 있을 수 있으므로 복호화
+    var encryptor = TextEncryptorFactories.getDelegatingTextEncryptor();
+    String username =
+        connConfig.getUsername() == null ? null : encryptor.decrypt(connConfig.getUsername());
+    String password =
+        connConfig.getPassword() == null ? null : encryptor.decrypt(connConfig.getPassword());
+    if ((username == null) != (password == null)) {
+      // 한쪽만 있으면 인증 없이 연결되어 첫 쿼리에서야 인증 오류가 나므로 설정 누락을 바로 알린다
+      log.warn(
+          "skip mongodb connection ({}): username and password must be set together",
+          connectionName);
+      return null;
+    }
+
+    MongoClientConnectionConfig config = new MongoClientConnectionConfig();
+    config.setConnection(connectionName);
+    config.setDatabase(connConfig.getDatabase());
+    config.setUserName(username);
+    config.setPassword(password);
+    config.setConnectionString(buildConnectionString(connConfig, username, password));
+    return config;
   }
 
   /** 드라이버는 '+' 를 공백으로 풀지 않으므로 URLEncoder 의 '+' 를 %20 으로 바꾼다. */
