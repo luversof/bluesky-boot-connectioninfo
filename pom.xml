@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>io.github.luversof</groupId>
 		<artifactId>bluesky-boot-connectioninfo-dependencies</artifactId>
-		<version>4.1.0-SNAPSHOT</version>
+		<version>4.2.0-SNAPSHOT</version>
 		<relativePath>./bluesky-boot-connectioninfo-dependencies</relativePath>
 	</parent>
 	<name>${project.groupId}:${project.artifactId}</name>

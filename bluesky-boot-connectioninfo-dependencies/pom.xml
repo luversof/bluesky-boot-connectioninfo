@@ -4,28 +4,28 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>io.github.luversof</groupId>
 	<artifactId>bluesky-boot-connectioninfo-dependencies</artifactId>
-	<version>4.1.0-SNAPSHOT</version>
+	<version>4.2.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>4.1.2</version>
+		<version>4.2.0</version>
 		<relativePath/>
 	</parent>
 	<properties>
 		<java.version>25</java.version>
-		<bluesky-boot-connectioninfo.version>4.1.0-SNAPSHOT</bluesky-boot-connectioninfo.version>
-		<bluesky-boot-crypto.version>4.1.0-SNAPSHOT</bluesky-boot-crypto.version>
-		<bluesky-boot-devcheck.version>4.1.0-SNAPSHOT</bluesky-boot-devcheck.version>
+		<bluesky-boot-connectioninfo.version>4.2.0-SNAPSHOT</bluesky-boot-connectioninfo.version>
+		<bluesky-boot-crypto.version>4.2.0-SNAPSHOT</bluesky-boot-crypto.version>
+		<bluesky-boot-devcheck.version>4.2.0-SNAPSHOT</bluesky-boot-devcheck.version>
 		
 		<!-- (s) central -->
 		<central-publishing-maven-plugin.version>0.12.0</central-publishing-maven-plugin.version>
 		<maven-gpg-plugin.version>3.2.8</maven-gpg-plugin.version>
 		<!-- (e) central -->
 		<!-- (s) sonarqube -->
-		<jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
-		<sonar-maven-plugin.version>5.8.0.7211</sonar-maven-plugin.version>
-		<spotless-maven-plugin.version>3.10.4</spotless-maven-plugin.version>
+		<jacoco-maven-plugin.version>0.8.16</jacoco-maven-plugin.version>
+		<sonar-maven-plugin.version>5.9.0.7382</sonar-maven-plugin.version>
+		<spotless-maven-plugin.version>3.12.0</spotless-maven-plugin.version>
 		<google-java-format.version>2.0.0</google-java-format.version>
 		<!-- (e) sonarqube -->
 	</properties>
