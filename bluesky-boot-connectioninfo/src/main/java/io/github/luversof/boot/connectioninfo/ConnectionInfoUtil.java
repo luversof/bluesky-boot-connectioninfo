@@ -6,9 +6,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.ApplicationContext;
@@ -75,15 +73,19 @@ public final class ConnectionInfoUtil {
    * MongoClient.class})이나 그 상위 타입(예: {@code DataSource.class})을 지정한다. LazyLoad 결과는 그 connection을 만든
    * Loader 타입의 Registry에 추가되므로 다른 타입의 Registry가 섞이지 않는다.
    *
-   * @param connectionKey connection key
+   * <p>{@code loaders.<loader>.connections.<alias>=<connection>}에 적힌 alias로도 찾는다. 코드는 alias만 알고, 어떤
+   * DB를 쓸지는 설정이 정한다. alias가 여러 connection을 가리키면 첫 번째를 쓴다.
+   *
+   * @param connectionKeyOrAlias connection key 또는 alias
    * @param connectionType 찾을 connection 타입
    * @return connection, 없으면 null
    */
-  public static <T> T getConnection(String connectionKey, Class<T> connectionType) {
+  public static <T> T getConnection(String connectionKeyOrAlias, Class<T> connectionType) {
     var lookup = lookup(connectionType);
     if (lookup.registries().isEmpty()) {
       return null;
     }
+    var connectionKey = resolveAlias(lookup, connectionKeyOrAlias);
 
     var connection = findConnection(lookup, connectionKey, connectionType);
     if (connection != null) {
@@ -114,6 +116,25 @@ public final class ConnectionInfoUtil {
       }
       return connection;
     }
+  }
+
+  /** connectionType을 만드는 Loader의 connections 설정에서 alias를 connection key로 바꾼다. alias가 아니면 그대로 둔다. */
+  private static String resolveAlias(Lookup lookup, String connectionKeyOrAlias) {
+    var connectionInfoProperties =
+        applicationContext.getBeanProvider(ConnectionInfoProperties.class).getIfAvailable();
+    if (connectionInfoProperties == null || connectionInfoProperties.getLoaders() == null) {
+      return connectionKeyOrAlias;
+    }
+    return lookup.loaderTargets().stream()
+        .map(loaderTarget ->
+            connectionInfoProperties.getLoaders().get(loaderTarget.loader().getLoaderKey()))
+        .filter(loaderProperties ->
+            loaderProperties != null && loaderProperties.getConnections() != null)
+        .map(loaderProperties -> loaderProperties.getConnections().get(connectionKeyOrAlias))
+        .filter(connectionList -> connectionList != null && !connectionList.isEmpty())
+        .map(List::getFirst)
+        .findFirst()
+        .orElse(connectionKeyOrAlias);
   }
 
   private static <T> T lazyLoad(Lookup lookup, String connectionKey, Class<T> connectionType) {
@@ -194,41 +215,5 @@ public final class ConnectionInfoUtil {
     return ResolvableType.forClass(ClassUtils.getUserClass(loader))
         .as(ConnectionInfoLoader.class)
         .resolveGeneric(0);
-  }
-
-  /**
-   * connectionKey에 해당하는 connectionName을 반환하는 유틸리티 메서드 connectionKey -> connectionName ->
-   * ConnectionInfo -> Connection
-   */
-  public static String getConnectionName(String connectionKey) {
-    return getConnectionNameList(connectionKey).stream()
-        .findFirst()
-        .orElseThrow(() ->
-            new IllegalStateException(
-                "connection-info connection is not configured: " + connectionKey));
-  }
-
-  /**
-   * connectionKey에 해당하는 connectionName List를 반환하는 유틸리티 메서드
-   *
-   * @param connectionKey
-   * @return
-   */
-  public static List<String> getConnectionNameList(String connectionKey) {
-    // getBean은 null 대신 예외를 던지므로, 스위치를 꺼서 빈이 없을 때도 아래 메시지가 나오게 provider로 꺼낸다
-    var connectionInfoProperties =
-        applicationContext.getBeanProvider(ConnectionInfoProperties.class).getIfAvailable();
-
-    if (connectionInfoProperties == null || connectionInfoProperties.getLoaders() == null) {
-      throw new IllegalStateException("connection-info.loaders is not configured");
-    }
-
-    return connectionInfoProperties.getLoaders().values().stream()
-        .map(ConnectionInfoProperties.ConnectionInfoLoaderProperties::getConnections)
-        .filter(Objects::nonNull)
-        .map(connections -> connections.get(connectionKey))
-        .filter(connectionList -> connectionList != null && !connectionList.isEmpty())
-        .flatMap(List::stream)
-        .collect(Collectors.toList());
   }
 }

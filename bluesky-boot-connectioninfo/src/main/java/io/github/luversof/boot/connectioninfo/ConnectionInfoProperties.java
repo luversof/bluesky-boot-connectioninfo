@@ -79,6 +79,12 @@ public class ConnectionInfoProperties {
     /** Settings applied to every connection the loader creates (e.g. HikariCP maximumPoolSize) */
     private Map<String, String> properties;
 
+    /**
+     * Settings for one connection, keyed by connection name. They override {@link #properties}
+     * (e.g. connection-properties.stock_postgresql.maximumPoolSize=20)
+     */
+    private Map<String, Map<String, String>> connectionProperties;
+
     public ConnectionInfoLoaderProperties() {}
 
     public ConnectionInfoLoaderProperties(boolean enabled, Map<String, List<String>> connections) {
@@ -108,6 +114,14 @@ public class ConnectionInfoProperties {
 
     public void setProperties(Map<String, String> properties) {
       this.properties = properties;
+    }
+
+    public Map<String, Map<String, String>> getConnectionProperties() {
+      return connectionProperties;
+    }
+
+    public void setConnectionProperties(Map<String, Map<String, String>> connectionProperties) {
+      this.connectionProperties = connectionProperties;
     }
   }
 }

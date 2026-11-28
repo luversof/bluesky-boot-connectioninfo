@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
@@ -143,13 +144,26 @@ class ConnectionInfoUtilTests {
   }
 
   @Test
-  void connectionNameListFailsClearlyWithoutProperties() {
-    try (var context = new AnnotationConfigApplicationContext(Config.class)) {
+  void findsConnectionByAliasOfLoaderConnections() {
+    // 코드는 alias만 알고 어떤 connection을 쓸지는 설정이 정한다
+    var properties = new ConnectionInfoProperties();
+    properties
+        .getLoaders()
+        .put(
+            "int",
+            new ConnectionInfoProperties.ConnectionInfoLoaderProperties(
+                true, Map.of("int_alias", List.of("int-lazy"))));
+    try (var context = new AnnotationConfigApplicationContext()) {
+      context.register(Config.class);
+      context.registerBean(ConnectionInfoProperties.class, () -> properties);
+      context.refresh();
       ConnectionInfoUtil.setApplicationContext(context);
 
-      assertThatThrownBy(() -> ConnectionInfoUtil.getConnectionNameList("any"))
-          .isInstanceOf(IllegalStateException.class)
-          .hasMessage("connection-info.loaders is not configured");
+      assertThat(ConnectionInfoUtil.getConnection("int_alias", Integer.class)).isEqualTo(2);
+      assertThat(ConnectionInfoUtil.getConnection("int-eager", Integer.class)).isEqualTo(1);
+      assertThat(ConnectionInfoUtil.getConnection("int_alias", String.class)).isNull();
+
+      assertThat(keys(context, "intRegistry")).containsExactly("int-eager", "int-lazy");
     }
   }
 

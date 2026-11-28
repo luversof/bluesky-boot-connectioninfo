@@ -38,7 +38,31 @@ class HikariDataSourceConnectionInfoLoaderTests {
   void usesHikariDefaultsWithoutLoaderProperties() {
     var loader = loader(new ConnectionInfoLoaderProperties());
 
-    assertThat(loader.createHikariConfig().getMaximumPoolSize())
+    assertThat(loader.createHikariConfig("db1").getMaximumPoolSize())
+        .isEqualTo(new com.zaxxer.hikari.HikariConfig().getMaximumPoolSize());
+  }
+
+  @Test
+  void connectionPropertiesOverrideLoaderPropertiesForThatConnectionOnly() {
+    var loaderProperties = new ConnectionInfoLoaderProperties();
+    loaderProperties.setProperties(Map.of("maximumPoolSize", "5", "minimumIdle", "1"));
+    loaderProperties.setConnectionProperties(Map.of("db1", Map.of("maximumPoolSize", "20")));
+    var loader = loader(loaderProperties);
+
+    var db1 = loader.createHikariConfig("DB1");
+    assertThat(db1.getMaximumPoolSize()).isEqualTo(20);
+    assertThat(db1.getMinimumIdle()).isEqualTo(1);
+    assertThat(loader.createHikariConfig("db2").getMaximumPoolSize()).isEqualTo(5);
+  }
+
+  @Test
+  void connectionPropertiesApplyWithoutLoaderProperties() {
+    var loaderProperties = new ConnectionInfoLoaderProperties();
+    loaderProperties.setConnectionProperties(Map.of("db1", Map.of("maximumPoolSize", "20")));
+    var loader = loader(loaderProperties);
+
+    assertThat(loader.createHikariConfig("db1").getMaximumPoolSize()).isEqualTo(20);
+    assertThat(loader.createHikariConfig("db2").getMaximumPoolSize())
         .isEqualTo(new com.zaxxer.hikari.HikariConfig().getMaximumPoolSize());
   }
 

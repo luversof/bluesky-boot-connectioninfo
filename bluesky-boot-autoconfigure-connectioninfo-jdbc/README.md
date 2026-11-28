@@ -51,7 +51,12 @@ bluesky-boot.connection-info.loaders.hikaridatasource.connections.app2=connectio
 # 지정하지 않으면 HikariCP 기본값(connection마다 연결 10개 유지)을 쓴다.
 bluesky-boot.connection-info.loaders.hikaridatasource.properties.maximumPoolSize=5
 bluesky-boot.connection-info.loaders.hikaridatasource.properties.minimumIdle=1
+# (선택) connection 하나에만 적용할 속성. key는 connection 이름이고, 위의 공통 속성을 덮어쓴다.
+bluesky-boot.connection-info.loaders.hikaridatasource.connection-properties.connection1.maximumPoolSize=20
 ```
+
+`connections.<alias>=<connection>`의 alias(위의 `app1`)는 코드에서 connection 이름 대신 쓸 수 있습니다.
+`ConnectionInfoUtil.getConnection("app1", DataSource.class)`는 `connection1`을 반환합니다. alias가 여러 connection을 가리키면 첫 번째를 씁니다.
 
 ### 데이터베이스 스키마
 

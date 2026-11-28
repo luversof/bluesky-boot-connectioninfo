@@ -229,6 +229,8 @@ public class MultiTenantService {
 `ConnectionInfoLoader`에서만 `connectionKey`를 찾습니다. `connectionType`에는 Registry에 등록된 타입(JDBC는 `HikariDataSource.class`,
 MongoDB는 `MongoClient.class`)이나 그 상위 타입(예: `DataSource.class`)을 지정합니다.
 
+`connectionKey` 자리에는 `loaders.<loader>.connections.<alias>=<connection>`의 alias도 쓸 수 있습니다. 코드는 alias만 알고, 어떤 DB를 쓸지는 설정이 정합니다.
+
 동작 요약:
 - 해당 타입의 레지스트리에서 `connectionKey`를 찾으면 첫 번째 연결 객체 반환. `connectionKey`는 대소문자를 구분하지 않습니다.
 - 못 찾으면 해당 타입을 만드는 `ConnectionInfoLoader`들에 대해 `load(List.of(connectionKey))`를 시도(지연 로드). 같은 키의 동시 요청은 한 번만 로드합니다.
