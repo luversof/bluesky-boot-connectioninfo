@@ -135,6 +135,15 @@ public class ConnectionInfoJdbcAutoConfiguration {
   }
 
   @Bean
+  @ConditionalOnProperty(
+      prefix = "bluesky-boot.connection-info.loaders",
+      name = "hikaridatasource.enabled",
+      havingValue = "true")
+  static ConnectionInfoDataSourceBeanRegistrar connectionInfoDataSourceBeanRegistrar() {
+    return new ConnectionInfoDataSourceBeanRegistrar();
+  }
+
+  @Bean
   <T extends HikariDataSource, C extends DataSourceConnectionConfig>
       ConnectionInfoRegistry<T> dataSourceConnectionInfoRegistry(
           List<ConnectionInfoLoader<T, C>> connectionInfoLoaderList) {

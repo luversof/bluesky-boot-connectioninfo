@@ -58,6 +58,12 @@ bluesky-boot.connection-info.loaders.hikaridatasource.connection-properties.conn
 `connections.<alias>=<connection>`의 alias(위의 `app1`)는 코드에서 connection 이름 대신 쓸 수 있습니다.
 `ConnectionInfoUtil.getConnection("app1", DataSource.class)`는 `connection1`을 반환합니다. alias가 여러 connection을 가리키면 첫 번째를 씁니다.
 
+alias마다 `<alias>DataSource` 이름의 `HikariDataSource` 빈도 등록됩니다(위 예시는 `app1DataSource`, `app2DataSource`).
+`@Qualifier("app1DataSource") DataSource dataSource`로 주입할 수 있고, 빈이므로 Spring Boot가 hikaricp 지표와 DB health를 붙입니다.
+- 같은 이름의 빈이 이미 있으면 등록하지 않습니다.
+- connection을 만들지 못했으면(메타 DB에 없음) 경고 로그만 남기고 빈을 만들지 않습니다. 기동은 계속됩니다.
+- 풀은 Loader가 닫으므로 Spring이 따로 닫지 않습니다.
+
 ### 데이터베이스 스키마
 
 연결 정보를 저장할 테이블이 필요합니다:
