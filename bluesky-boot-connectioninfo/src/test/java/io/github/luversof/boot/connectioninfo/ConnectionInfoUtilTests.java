@@ -1,6 +1,7 @@
 package io.github.luversof.boot.connectioninfo;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -125,6 +126,33 @@ class ConnectionInfoUtilTests {
     }
   }
 
+  @Test
+  void doesNotReloadRightAwayWhenLoadFails() {
+    // DB 장애로 load가 실패한 key를 요청마다 다시 시도하면 연결 timeout만큼 lock을 잡아 요청이 줄줄이 막힌다
+    try (var context = new AnnotationConfigApplicationContext(Config.class)) {
+      ConnectionInfoUtil.setApplicationContext(context);
+      var intLoader = context.getBean(IntLoader.class);
+      intLoader.failLoad = true;
+
+      assertThatThrownBy(() -> ConnectionInfoUtil.getConnection("int-lazy", Integer.class))
+          .isInstanceOf(IllegalStateException.class);
+      assertThat(ConnectionInfoUtil.getConnection("int-lazy", Integer.class)).isNull();
+
+      assertThat(intLoader.lazyLoadCount).hasValue(1);
+    }
+  }
+
+  @Test
+  void connectionNameListFailsClearlyWithoutProperties() {
+    try (var context = new AnnotationConfigApplicationContext(Config.class)) {
+      ConnectionInfoUtil.setApplicationContext(context);
+
+      assertThatThrownBy(() -> ConnectionInfoUtil.getConnectionNameList("any"))
+          .isInstanceOf(IllegalStateException.class)
+          .hasMessage("connection-info.loaders is not configured");
+    }
+  }
+
   private static List<String> keys(
       AnnotationConfigApplicationContext context, String registryName) {
     return context
@@ -147,6 +175,8 @@ class ConnectionInfoUtilTests {
 
     volatile long loadDelayMillis;
 
+    volatile boolean failLoad;
+
     TestLoader(String lazyKey, T lazyConnection) {
       this.lazyKey = lazyKey;
       this.lazyConnection = lazyConnection;
@@ -160,6 +190,9 @@ class ConnectionInfoUtilTests {
     @Override
     public List<ConnectionInfo<T>> load(List<String> connectionList) {
       lazyLoadCount.incrementAndGet();
+      if (failLoad) {
+        throw new IllegalStateException("meta db is down");
+      }
       if (loadDelayMillis > 0) {
         try {
           // 아무도 countDown하지 않는 latch를 기다려 load를 loadDelayMillis만큼 늦춘다

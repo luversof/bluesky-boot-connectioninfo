@@ -43,10 +43,17 @@ public interface ConnectionInfoRegistry<T> {
    * @return
    */
   default ConnectionInfo<T> getConnectionInfo(ConnectionInfoKey connectionInfoKey) {
+    // connectionKey는 문자열 조회와 같은 규칙(대소문자 무시)으로 비교한다
     return getConnectionInfoList().stream()
-        .filter(connectionInfo -> connectionInfo.getKey().equals(connectionInfoKey))
+        .filter(connectionInfo ->
+            connectionInfo.getKey().loaderKey().equals(connectionInfoKey.loaderKey())
+                && connectionInfo
+                    .getKey()
+                    .connectionKey()
+                    .equalsIgnoreCase(connectionInfoKey.connectionKey()))
         .findAny()
-        .orElseThrow(() -> new RuntimeException("NOT_EXIST_CONNECTIONINFO"));
+        .orElseThrow(() ->
+            new IllegalStateException("connection info does not exist: " + connectionInfoKey));
   }
 
   /**

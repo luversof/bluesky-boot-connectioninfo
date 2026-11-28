@@ -102,14 +102,27 @@ public final class ConnectionInfoUtil {
         return connection;
       }
 
-      for (var loaderTarget : lookup.loaderTargets()) {
-        var connectionInfoList = loaderTarget.loader().load(List.of(connectionKey));
-        if (connectionInfoList != null && !connectionInfoList.isEmpty()) {
-          loaderTarget.registry().addConnectionInfoList(connectionInfoList);
-          return connectionType.cast(connectionInfoList.getFirst().getConnection());
-        }
+      try {
+        connection = lazyLoad(lookup, connectionKey, connectionType);
+      } catch (RuntimeException exception) {
+        // DB 장애로 load가 실패해도 miss로 기억한다. 아니면 요청마다 연결 timeout만큼 lock을 잡고 다시 시도해 요청이 줄줄이 막힌다.
+        recordMiss(missKey);
+        throw exception;
       }
-      recordMiss(missKey);
+      if (connection == null) {
+        recordMiss(missKey);
+      }
+      return connection;
+    }
+  }
+
+  private static <T> T lazyLoad(Lookup lookup, String connectionKey, Class<T> connectionType) {
+    for (var loaderTarget : lookup.loaderTargets()) {
+      var connectionInfoList = loaderTarget.loader().load(List.of(connectionKey));
+      if (connectionInfoList != null && !connectionInfoList.isEmpty()) {
+        loaderTarget.registry().addConnectionInfoList(connectionInfoList);
+        return connectionType.cast(connectionInfoList.getFirst().getConnection());
+      }
     }
     return null;
   }
@@ -202,7 +215,9 @@ public final class ConnectionInfoUtil {
    * @return
    */
   public static List<String> getConnectionNameList(String connectionKey) {
-    var connectionInfoProperties = applicationContext.getBean(ConnectionInfoProperties.class);
+    // getBean은 null 대신 예외를 던지므로, 스위치를 꺼서 빈이 없을 때도 아래 메시지가 나오게 provider로 꺼낸다
+    var connectionInfoProperties =
+        applicationContext.getBeanProvider(ConnectionInfoProperties.class).getIfAvailable();
 
     if (connectionInfoProperties == null || connectionInfoProperties.getLoaders() == null) {
       throw new IllegalStateException("connection-info.loaders is not configured");
